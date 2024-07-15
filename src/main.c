@@ -15,11 +15,15 @@
 #include "chat_cli.h"
 #include <zephyr/logging/log.h>
 #include <bluetooth/scan.h>
+#include <mesh/mesh.h>
 
 LOG_MODULE_REGISTER(chat, CONFIG_LOG_DEFAULT_LEVEL);
 static void init_scanner(void);
 static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
                     struct net_buf_simple *buf);
+static void scan_cb_new(const struct bt_le_scan_recv_info *info,
+		     struct net_buf_simple *buf);
+static void scan_recv_cb(const struct bt_le_scan_recv_info *info, struct net_buf_simple *buf);
 
 static void bt_ready(int err)
 {
@@ -29,10 +33,14 @@ static void bt_ready(int err)
     }
 
     printk("Bluetooth initialized\n");
+     // Add a small delay before starting the scanner
+
+    // Initialize scanner after mesh is initialized
+  
 
     dk_leds_init();
     dk_buttons_init(NULL);
-
+ 
     err = bt_mesh_init(bt_mesh_dk_prov_init(), model_handler_init());
     if (err) {
         printk("Initializing mesh failed (err %d)\n", err);
@@ -46,14 +54,18 @@ static void bt_ready(int err)
     /* This will be a no-op if settings_load() loaded provisioning info */
     bt_mesh_prov_enable(BT_MESH_PROV_ADV | BT_MESH_PROV_GATT);
 
-    printk("Mesh initialized\n");
+    printk("Mesh settings initialized\n");
 
-    // Add a small delay before starting the scanner
-    k_sleep(K_SECONDS(2));
+    static struct bt_le_scan_cb scan_callbacks = {
+        .recv = scan_recv_cb,
+        // You can also set .timeout if you want to handle scan timeouts
+    };
 
+    bt_le_scan_cb_register(&scan_callbacks);
+    // k_sleep(K_SECONDS(4));
+    // init_scanner();
 
-    // Initialize scanner after mesh is initialized
-    init_scanner();
+   
 }
 
 int main(void)
@@ -67,6 +79,7 @@ int main(void)
 		printk("Bluetooth init failed (err %d)\n", err);
 	}
 
+
 	 // Keep the main thread running
     while (1) {
         k_sleep(K_SECONDS(1));
@@ -75,6 +88,17 @@ int main(void)
 	return 0;
 }
 
+static void scan_recv_cb(const struct bt_le_scan_recv_info *info, struct net_buf_simple *buf)
+{
+    char addr[BT_ADDR_LE_STR_LEN];
+    bt_addr_le_to_str(info->addr, addr, sizeof(addr));
+
+    printk("Device found: %s (RSSI %d)\n", addr, info->rssi);
+
+    // send_adv_message(&info);
+
+    // Add your custom logic here to handle the scanned device
+}
 
 // Callback for handling BLE scan results
 static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
@@ -89,7 +113,7 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
 	printk("Device found: %s (RSSI %d)\n", addr_str, rssi);
 
 	// printk("ADDR=%s RSSI=%d ADV=%d %s\n", addr, device_info->recv_info->rssi, device_info->recv_info->adv_props, str);
-	// send_adv_message(&device);
+	send_adv_message(&device);
     // Publish device info to the mesh network
     // bt_mesh_model_publish(model, OP_ADV_DEVICE_REPORT, &device, sizeof(device), NULL);
 
@@ -110,6 +134,11 @@ static void init_scanner(void)
     // Check if scanning is already active
     if (bt_le_scan_stop() == -EALREADY) {
         printk("Scanning was not active\n");
+    }
+
+    if (!bt_is_ready()) {
+        printk("Bluetooth stack not ready\n");
+        return;
     }
 
     // Try to start scanning with the specified parameters

@@ -39,6 +39,6 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/cmsis/cmsis/CMSIS/Core/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/cmsis/cmsis/CMSIS/Core/cmake_install.cmake")
 endif()
 

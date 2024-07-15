@@ -40,7 +40,7 @@ static int handle_message(const struct bt_mesh_model *model, struct bt_mesh_msg_
 	const uint8_t *msg;
 
 	msg = extract_msg(buf);
-
+	// TODO: printk("handled message %s \n", buf);
 	if (chat->handlers->message) {
 		chat->handlers->message(chat, ctx, msg);
 	}

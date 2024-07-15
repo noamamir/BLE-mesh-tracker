@@ -39,16 +39,16 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/nrfxlib/nrfxlib/crypto/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/nrfxlib/nrfxlib/crypto/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/nrfxlib/nrfxlib/softdevice_controller/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/nrfxlib/nrfxlib/softdevice_controller/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/nrfxlib/nrfxlib/mpsl/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/nrfxlib/nrfxlib/mpsl/cmake_install.cmake")
 endif()
 

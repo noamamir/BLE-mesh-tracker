@@ -982,4 +982,9 @@ arduino_spi: &spi2 {
  };
 };
 # 0 "<command-line>" 2
+# 1 "./devicetree.overlay" 1
+&uart0 {
+ current-speed = <460800>;
+};
+# 0 "<command-line>" 2
 # 1 "C:/ncs/v2.6.1/zephyr/misc/empty_file.c"

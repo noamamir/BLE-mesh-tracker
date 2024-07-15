@@ -432,7 +432,7 @@ const struct bt_mesh_comp *model_handler_init(void)
 	return &comp;
 }
 
-void send_adv_message(struct adv_device_info *device)
+void send_adv_message(struct bt_le_scan_recv_info *device)
 {
 	int err;
 	

@@ -39,11 +39,11 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/zephyr/arch/arch/arm/core/cortex_m/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/zephyr/arch/arch/arm/core/cortex_m/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/zephyr/arch/arch/arm/core/mpu/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/zephyr/arch/arch/arm/core/mpu/cmake_install.cmake")
 endif()
 

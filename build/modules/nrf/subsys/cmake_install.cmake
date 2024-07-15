@@ -39,36 +39,36 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/nrf/subsys/bluetooth/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/nrf/subsys/bluetooth/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/nrf/subsys/net/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/nrf/subsys/net/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/nrf/subsys/dfu/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/nrf/subsys/dfu/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/nrf/subsys/mpsl/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/nrf/subsys/mpsl/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/nrf/subsys/shell/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/nrf/subsys/shell/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/nrf/subsys/debug/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/nrf/subsys/debug/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/nrf/subsys/partition_manager/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/nrf/subsys/partition_manager/cmake_install.cmake")
 endif()
 

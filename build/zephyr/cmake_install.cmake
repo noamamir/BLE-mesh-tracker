@@ -39,231 +39,231 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/zephyr/arch/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/zephyr/arch/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/zephyr/lib/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/zephyr/lib/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/zephyr/soc/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/zephyr/soc/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/zephyr/boards/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/zephyr/boards/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/zephyr/subsys/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/zephyr/subsys/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/zephyr/drivers/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/zephyr/drivers/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/nrf/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/nrf/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/mcuboot/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/mcuboot/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/mbedtls/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/mbedtls/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/trusted-firmware-m/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/trusted-firmware-m/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/cjson/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/cjson/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/azure-sdk-for-c/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/azure-sdk-for-c/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/cirrus-logic/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/cirrus-logic/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/openthread/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/openthread/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/memfault-firmware-sdk/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/memfault-firmware-sdk/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/canopennode/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/canopennode/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/chre/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/chre/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/lz4/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/lz4/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/nanopb/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/nanopb/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/zscilib/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/zscilib/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/cmsis/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/cmsis/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/cmsis-dsp/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/cmsis-dsp/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/cmsis-nn/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/cmsis-nn/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/fatfs/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/fatfs/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/hal_nordic/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/hal_nordic/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/st/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/st/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/hal_wurthelektronik/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/hal_wurthelektronik/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/libmetal/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/libmetal/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/liblc3/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/liblc3/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/littlefs/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/littlefs/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/loramac-node/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/loramac-node/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/lvgl/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/lvgl/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/mipi-sys-t/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/mipi-sys-t/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/nrf_hw_models/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/nrf_hw_models/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/open-amp/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/open-amp/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/picolibc/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/picolibc/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/segger/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/segger/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/tinycrypt/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/tinycrypt/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/uoscore-uedhoc/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/uoscore-uedhoc/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/zcbor/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/zcbor/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/nrfxlib/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/nrfxlib/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/modules/connectedhomeip/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/modules/connectedhomeip/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/zephyr/kernel/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/zephyr/kernel/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/zephyr/cmake/flash/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/zephyr/cmake/flash/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/zephyr/cmake/usage/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/zephyr/cmake/usage/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/projects/nrf/nrf-mesh-chat/build/zephyr/cmake/reports/cmake_install.cmake")
+  include("C:/projects/nrf/BLE-mesh-tracker/build/zephyr/cmake/reports/cmake_install.cmake")
 endif()
 

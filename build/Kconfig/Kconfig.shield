@@ -1,2 +1,2 @@
-osource "c:/projects/nrf/nrf-mesh-chat/boards/shields/*/Kconfig.shield"
+osource "c:/projects/nrf/ble-mesh-tracker/boards/shields/*/Kconfig.shield"
 osource "C:/ncs/v2.6.1/nrf/boards/shields/*/Kconfig.shield"

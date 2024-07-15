@@ -2607,8 +2607,8 @@ C:\ncs\v2.6.1\zephyr\subsys\usb\device_next\class\Kconfig.template.instances_cou
 C:\ncs\v2.6.1\zephyr\subsys\usb\host\Kconfig
 C:\ncs\v2.6.1\zephyr\subsys\usb\usb_c\Kconfig
 C:\ncs\v2.6.1\zephyr\subsys\zbus\Kconfig
-C:\projects\nrf\nrf-mesh-chat\Kconfig
-C:\projects\nrf\nrf-mesh-chat\build\Kconfig\Kconfig.dts
-C:\projects\nrf\nrf-mesh-chat\build\Kconfig\Kconfig.modules
-C:\projects\nrf\nrf-mesh-chat\build\Kconfig\Kconfig.shield
-C:\projects\nrf\nrf-mesh-chat\build\Kconfig\Kconfig.shield.defconfig
+C:\projects\nrf\BLE-mesh-tracker\Kconfig
+C:\projects\nrf\BLE-mesh-tracker\build\Kconfig\Kconfig.dts
+C:\projects\nrf\BLE-mesh-tracker\build\Kconfig\Kconfig.modules
+C:\projects\nrf\BLE-mesh-tracker\build\Kconfig\Kconfig.shield
+C:\projects\nrf\BLE-mesh-tracker\build\Kconfig\Kconfig.shield.defconfig
