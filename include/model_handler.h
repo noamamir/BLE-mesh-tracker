@@ -26,7 +26,7 @@ struct adv_device_info {
 
 
 const struct bt_mesh_comp *model_handler_init(void);
-void send_adv_message(struct adv_device_info *device);
+void send_adv_message(const struct bt_le_scan_recv_info *device);
 
 #ifdef __cplusplus
 }

@@ -12,6 +12,9 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(chat);
 
+static void pass_to_computer_service(const bt_addr_t *addr, int8_t rssi);
+static bool is_master_device(void);
+
 BUILD_ASSERT(BT_MESH_MODEL_BUF_LEN(BT_MESH_CHAT_CLI_OP_MESSAGE,
 				   BT_MESH_CHAT_CLI_MSG_MAXLEN_MESSAGE) <=
 		    BT_MESH_RX_SDU_MAX,
@@ -32,6 +35,58 @@ static const uint8_t *extract_msg(struct net_buf_simple *buf)
 {
 	buf->data[buf->len - 1] = '\0';
 	return net_buf_simple_pull_mem(buf, buf->len);
+}
+
+
+int handle_scan_info(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
+                     struct net_buf_simple *buf)
+{
+    bt_addr_t addr;
+    int8_t rssi;
+
+    // Extract address from the message
+    memcpy(&addr, net_buf_simple_pull_mem(buf, BT_ADDR_SIZE), BT_ADDR_SIZE);
+
+    // Extract RSSI from the message
+    rssi = net_buf_simple_pull_u8(buf);
+
+    // Convert address to string for logging
+    char addr_str[BT_ADDR_STR_LEN];
+    bt_addr_to_str(&addr, addr_str, sizeof(addr_str));
+
+    // Check if this device is the master device
+    if (is_master_device()) {
+        pass_to_computer_service(&addr, rssi);
+    } else {
+        printk("This is not the master device. Processing locally.\n");
+        // Add any local processing logic here
+    }
+
+    return 0;
+}
+
+
+static bool is_master_device(void)
+{
+#if defined(CONFIG_DEVICE_IS_MASTER)
+    return true;
+#else
+    return false;
+#endif
+}
+
+
+
+
+// Function to pass data to a computer service
+static void pass_to_computer_service(const bt_addr_t *addr, int8_t rssi)
+{
+    // Implement the logic to pass the data to your computer service
+    // This could involve sending data over UART, USB, or another interface
+    printk("Passing to computer service: Device %02x:%02x:%02x:%02x:%02x:%02x, RSSI %d\n",
+           addr-> val[5], addr->val[4], addr->val[3],
+           addr-> val[2], addr->val[1], addr->val[0],
+           rssi);
 }
 
 static int handle_message(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx, struct net_buf_simple *buf)
@@ -120,6 +175,11 @@ static int handle_presence_get(const struct bt_mesh_model *model, struct bt_mesh
 
 /* .. include_startingpoint_chat_cli_rst_2 */
 const struct bt_mesh_model_op _bt_mesh_chat_cli_op[] = {
+	{
+        BT_MESH_CHAT_CLI_OP_SCAN_INFO,
+        BT_MESH_LEN_MIN(BT_MESH_CHAT_CLI_MSG_LEN_SCAN_INFO),
+        handle_scan_info
+    },
 	{
 		BT_MESH_CHAT_CLI_OP_MESSAGE,
 		BT_MESH_LEN_MIN(BT_MESH_CHAT_CLI_MSG_MINLEN_MESSAGE),
@@ -295,6 +355,19 @@ int bt_mesh_chat_cli_message_send(struct bt_mesh_chat_cli *chat,
 	return bt_mesh_model_publish(chat->model);
 }
 
+int bt_mesh_chat_cli_send_scan_info(struct bt_mesh_chat_cli *chat,
+                                    const struct bt_le_scan_recv_info *info)
+{
+    struct net_buf_simple *buf = chat->model->pub->msg;
+    bt_mesh_model_msg_init(buf, BT_MESH_CHAT_CLI_OP_SCAN_INFO);
+    // Add address
+    net_buf_simple_add_mem(buf, &info->addr->a, BT_ADDR_SIZE);
+
+    // Add RSSI
+    net_buf_simple_add_u8(buf, info->rssi);
+	
+    return bt_mesh_model_publish(chat->model);
+}
 /* .. include_startingpoint_chat_cli_rst_9 */
 int bt_mesh_chat_cli_private_message_send(struct bt_mesh_chat_cli *chat,
 					  uint16_t addr,

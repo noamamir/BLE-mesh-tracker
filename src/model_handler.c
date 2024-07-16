@@ -432,11 +432,11 @@ const struct bt_mesh_comp *model_handler_init(void)
 	return &comp;
 }
 
-void send_adv_message(struct bt_le_scan_recv_info *device)
+void send_adv_message(const struct bt_le_scan_recv_info *device)
 {
-	int err;
 	
-	err = bt_mesh_chat_cli_message_send(&chat, "yes");
+	int err = bt_mesh_chat_cli_send_scan_info(&chat, device);
+
 	if (err) {
 		LOG_WRN("Failed to send message: %d", err);
 	}

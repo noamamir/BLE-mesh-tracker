@@ -8,6 +8,12 @@ source "Kconfig.zephyr"
 
 menu "Nordic Bluetooth Mesh chat client sample"
 
+config DEVICE_IS_MASTER
+    bool "Device is master"
+    default n
+    help
+      Set to y if this device should act as the master device.
+	  
 config BT_MESH_CHAT_CLI_MESSAGE_LENGTH
 	int "Max length of the message to be sent over mesh"
 	default 90

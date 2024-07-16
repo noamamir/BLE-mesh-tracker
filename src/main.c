@@ -18,11 +18,7 @@
 #include <mesh/mesh.h>
 
 LOG_MODULE_REGISTER(chat, CONFIG_LOG_DEFAULT_LEVEL);
-static void init_scanner(void);
-static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
-                    struct net_buf_simple *buf);
-static void scan_cb_new(const struct bt_le_scan_recv_info *info,
-		     struct net_buf_simple *buf);
+// static void init_scanner(void);
 static void scan_recv_cb(const struct bt_le_scan_recv_info *info, struct net_buf_simple *buf);
 
 static void bt_ready(int err)
@@ -93,71 +89,57 @@ static void scan_recv_cb(const struct bt_le_scan_recv_info *info, struct net_buf
     char addr[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(info->addr, addr, sizeof(addr));
 
-    printk("Device found: %s (RSSI %d)\n", addr, info->rssi);
 
+    if (addr[0] == 'F' && addr[1] == 'F' && addr[3] == 'F' && addr[4] == 'F') {
+        printk("Device found: %s (RSSI %d)\n", addr, info->rssi);
+        send_adv_message(info);
+    }
     // send_adv_message(&info);
 
     // Add your custom logic here to handle the scanned device
 }
 
-// Callback for handling BLE scan results
-static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
-                    struct net_buf_simple *buf)
-{
-    struct adv_device_info device;
-    memcpy(device.addr, addr->a.val, 6);
-    device.rssi = rssi;
 
-	char addr_str[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
-	printk("Device found: %s (RSSI %d)\n", addr_str, rssi);
 
-	// printk("ADDR=%s RSSI=%d ADV=%d %s\n", addr, device_info->recv_info->rssi, device_info->recv_info->adv_props, str);
-	send_adv_message(&device);
-    // Publish device info to the mesh network
-    // bt_mesh_model_publish(model, OP_ADV_DEVICE_REPORT, &device, sizeof(device), NULL);
+// static void init_scanner(void)
+// {
+//     struct bt_le_scan_param scan_param = {
+//         .type = BT_LE_SCAN_TYPE_PASSIVE,
+//         .options = BT_LE_SCAN_OPT_NONE,
+//         .interval = BT_GAP_SCAN_SLOW_INTERVAL_2,
+//         .window = BT_GAP_SCAN_SLOW_WINDOW_2,
+//     };
+//     int err;
 
-}
+//     printk("Starting scanner...\n");
 
-static void init_scanner(void)
-{
-    struct bt_le_scan_param scan_param = {
-        .type = BT_LE_SCAN_TYPE_PASSIVE,
-        .options = BT_LE_SCAN_OPT_NONE,
-        .interval = BT_GAP_SCAN_SLOW_INTERVAL_2,
-        .window = BT_GAP_SCAN_SLOW_WINDOW_2,
-    };
-    int err;
+//     // Check if scanning is already active
+//     if (bt_le_scan_stop() == -EALREADY) {
+//         printk("Scanning was not active\n");
+//     }
 
-    printk("Starting scanner...\n");
+//     if (!bt_is_ready()) {
+//         printk("Bluetooth stack not ready\n");
+//         return;
+//     }
 
-    // Check if scanning is already active
-    if (bt_le_scan_stop() == -EALREADY) {
-        printk("Scanning was not active\n");
-    }
-
-    if (!bt_is_ready()) {
-        printk("Bluetooth stack not ready\n");
-        return;
-    }
-
-    // Try to start scanning with the specified parameters
-    err = bt_le_scan_start(&scan_param, scan_cb);
-    if (err) {
-        printk("Scanning failed to start (err %d)\n", err);
+//     // Try to start scanning with the specified parameters
+//     // err = bt_le_scan_start(&scan_param, scan_cb);
+//     // if (err) {
+//     //     printk("Scanning failed to start (err %d)\n", err);
         
-        // If the parameters are invalid, try with default parameters
-        if (err == -EINVAL) {
-            printk("Trying with default scan parameters...\n");
-            err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, scan_cb);
-            if (err) {
-                printk("Default scanning failed to start (err %d)\n", err);
-            } else {
-                printk("Default scanning started successfully\n");
-            }
-        }
-    } else {
-        printk("Scanning started successfully\n");
-    }
-}
+//     //     // If the parameters are invalid, try with default parameters
+//     //     if (err == -EINVAL) {
+//     //         printk("Trying with default scan parameters...\n");
+//     //         err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, scan_cb);
+//     //         if (err) {
+//     //             printk("Default scanning failed to start (err %d)\n", err);
+//     //         } else {
+//     //             printk("Default scanning started successfully\n");
+//     //         }
+//     //     }
+//     // } else {
+//     //     printk("Scanning started successfully\n");
+//     // }
+// }
 

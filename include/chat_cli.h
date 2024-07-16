@@ -21,6 +21,8 @@
 extern "C" {
 #endif
 
+// operation codes 
+
 /* .. include_startingpoint_chat_cli_rst_1 */
 /** Company ID of the Bluetooth Mesh Chat Client model. */
 #define BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID    CONFIG_BT_COMPANY_ID_NORDIC
@@ -29,8 +31,7 @@ extern "C" {
 #define BT_MESH_CHAT_CLI_VENDOR_MODEL_ID      0x000A
 
 /** Non-private message opcode. */
-#define BT_MESH_CHAT_CLI_OP_MESSAGE BT_MESH_MODEL_OP_3(0x0A, \
-				       BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID)
+#define BT_MESH_CHAT_CLI_OP_MESSAGE BT_MESH_MODEL_OP_3(0x0A,  BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID)
 
 /** Private message opcode. */
 #define BT_MESH_CHAT_CLI_OP_PRIVATE_MESSAGE BT_MESH_MODEL_OP_3(0x0B, \
@@ -47,8 +48,13 @@ extern "C" {
 /** Presence get message opcode. */
 #define BT_MESH_CHAT_CLI_OP_PRESENCE_GET BT_MESH_MODEL_OP_3(0x0E, \
 				       BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID)
-/* .. include_endpoint_chat_cli_rst_1 */
 
+/** opeartion code of send scan info */
+#define BT_MESH_CHAT_CLI_OP_SCAN_INFO BT_MESH_MODEL_OP_3(0x0F, \
+				       BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID)
+
+/* .. include_endpoint_chat_cli_rst_1 */
+#define BT_MESH_CHAT_CLI_MSG_LEN_SCAN_INFO 7
 #define BT_MESH_CHAT_CLI_MSG_MINLEN_MESSAGE 1
 #define BT_MESH_CHAT_CLI_MSG_MAXLEN_MESSAGE (\
 				     CONFIG_BT_MESH_CHAT_CLI_MESSAGE_LENGTH \
@@ -220,3 +226,6 @@ extern const struct bt_mesh_model_cb _bt_mesh_chat_cli_cb;
 #endif /* BT_MESH_CHAT_CLI_H__ */
 
 /** @} */
+
+int bt_mesh_chat_cli_send_scan_info(struct bt_mesh_chat_cli *chat,
+                                    const struct bt_le_scan_recv_info *info);
