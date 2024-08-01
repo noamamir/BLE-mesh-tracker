@@ -9,7 +9,7 @@
 #include <zephyr/bluetooth/bluetooth.h>
 #include <bluetooth/mesh/models.h>
 #include <dk_buttons_and_leds.h>
-
+#include <zephyr/drivers/counter.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/shell/shell_uart.h>
 
@@ -20,7 +20,8 @@
 LOG_MODULE_DECLARE(chat);
 
 static const struct shell *chat_shell;
-
+static const struct device *rtc_dev;
+static uint64_t *rtc_start_time;
 
 
 /******************************************************************************/
@@ -212,12 +213,30 @@ static void handle_chat_message_reply(struct bt_mesh_chat_cli *chat,
 	shell_print(chat_shell, "<0x%04X> received the message", ctx->addr);
 }
 
+static void handle_chat_time_sync(struct bt_mesh_chat_cli *chat, struct bt_mesh_msg_ctx *ctx ,uint64_t *time)
+{
+    if (!rtc_dev) {
+        rtc_dev = DEVICE_DT_GET(DT_NODELABEL(rtc0));
+        if (!device_is_ready(rtc_dev)) {
+            LOG_ERR("RTC device not ready");
+            return;
+        }
+    }
+
+    rtc_start_time = time;
+    counter_start(rtc_dev);
+
+    LOG_INF("Time synced: %llu", time);
+}
+
+
 static const struct bt_mesh_chat_cli_handlers chat_handlers = {
 	.start = handle_chat_start,
 	.presence = handle_chat_presence,
 	.message = handle_chat_message,
 	.private_message = handle_chat_private_message,
 	.message_reply = handle_chat_message_reply,
+	.time_sync = handle_chat_time_sync,
 };
 
 /* .. include_startingpoint_model_handler_rst_1 */
@@ -441,4 +460,13 @@ void send_adv_message(const struct bt_le_scan_recv_info *device)
 		LOG_WRN("Failed to send message: %d", err);
 	}
 
+}
+
+// Add this function to initiate time sync from the main node
+void initiate_time_sync(uint64_t *time)
+{
+    int err = bt_mesh_chat_cli_time_sync_send(&chat, time);
+    if (err) {
+        LOG_WRN("Failed to send time sync message: %d", err);
+    }
 }

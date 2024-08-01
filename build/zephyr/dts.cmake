@@ -327,7 +327,7 @@ set_target_properties(devicetree_target PROPERTIES "DT_PROP|/soc/rtc@4000b000|zl
 set_target_properties(devicetree_target PROPERTIES "DT_PROP|/soc/rtc@4000b000|clock-frequency" "32768")
 set_target_properties(devicetree_target PROPERTIES "DT_PROP|/soc/rtc@4000b000|interrupts" "11;1;")
 set_target_properties(devicetree_target PROPERTIES "DT_PROP|/soc/rtc@4000b000|prescaler" "1")
-set_target_properties(devicetree_target PROPERTIES "DT_PROP|/soc/rtc@4000b000|status" "disabled")
+set_target_properties(devicetree_target PROPERTIES "DT_PROP|/soc/rtc@4000b000|status" "okay")
 set_target_properties(devicetree_target PROPERTIES "DT_PROP|/soc/rtc@4000b000|compatible" "nordic,nrf-rtc;")
 set_target_properties(devicetree_target PROPERTIES "DT_PROP|/soc/rtc@4000b000|wakeup-source" "False")
 set_target_properties(devicetree_target PROPERTIES "DT_PROP|/soc/rtc@4000b000|zephyr,pm-device-runtime-auto" "False")

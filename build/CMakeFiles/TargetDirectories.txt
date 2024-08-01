@@ -200,6 +200,9 @@ C:/projects/nrf/BLE-mesh-tracker/build/zephyr/drivers/clock_control/CMakeFiles/r
 C:/projects/nrf/BLE-mesh-tracker/build/zephyr/drivers/console/CMakeFiles/drivers__console.dir
 C:/projects/nrf/BLE-mesh-tracker/build/zephyr/drivers/console/CMakeFiles/edit_cache.dir
 C:/projects/nrf/BLE-mesh-tracker/build/zephyr/drivers/console/CMakeFiles/rebuild_cache.dir
+C:/projects/nrf/BLE-mesh-tracker/build/zephyr/drivers/counter/CMakeFiles/drivers__counter.dir
+C:/projects/nrf/BLE-mesh-tracker/build/zephyr/drivers/counter/CMakeFiles/edit_cache.dir
+C:/projects/nrf/BLE-mesh-tracker/build/zephyr/drivers/counter/CMakeFiles/rebuild_cache.dir
 C:/projects/nrf/BLE-mesh-tracker/build/zephyr/drivers/entropy/CMakeFiles/drivers__entropy.dir
 C:/projects/nrf/BLE-mesh-tracker/build/zephyr/drivers/entropy/CMakeFiles/edit_cache.dir
 C:/projects/nrf/BLE-mesh-tracker/build/zephyr/drivers/entropy/CMakeFiles/rebuild_cache.dir

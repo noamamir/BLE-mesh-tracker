@@ -8,12 +8,22 @@
 #include "chat_cli.h"
 #include "mesh/net.h"
 #include <string.h>
-
+#include <zephyr/drivers/uart.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(chat);
 
-static void pass_to_computer_service(const bt_addr_t *addr, int8_t rssi);
-static bool is_master_device(void);
+#define UART_DEVICE_NODE DT_NODELABEL(uart0)
+
+static const struct device *uart_dev;
+
+
+static void pass_to_computer_service(const char *uuid ,const bt_addr_t *addr, int8_t rssi);
+bool is_master_device(void);
+static void uart_send_string(const char *str);
+static int handle_time_sync(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
+                            struct net_buf_simple *buf);
+#define UART_DEVICE_NODE DT_NODELABEL(uart0)
+
 
 BUILD_ASSERT(BT_MESH_MODEL_BUF_LEN(BT_MESH_CHAT_CLI_OP_MESSAGE,
 				   BT_MESH_CHAT_CLI_MSG_MAXLEN_MESSAGE) <=
@@ -43,6 +53,7 @@ int handle_scan_info(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *
 {
     bt_addr_t addr;
     int8_t rssi;
+ 	char uuid_str[UUID_STR_LEN];
 
     // Extract address from the message
     memcpy(&addr, net_buf_simple_pull_mem(buf, BT_ADDR_SIZE), BT_ADDR_SIZE);
@@ -54,19 +65,19 @@ int handle_scan_info(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *
     char addr_str[BT_ADDR_STR_LEN];
     bt_addr_to_str(&addr, addr_str, sizeof(addr_str));
 
+ 	// Convert the source address (UUID) to string
+    snprintf(uuid_str, sizeof(uuid_str), "%04x", ctx->addr);
+
     // Check if this device is the master device
     if (is_master_device()) {
-        pass_to_computer_service(&addr, rssi);
-    } else {
-        printk("This is not the master device. Processing locally.\n");
-        // Add any local processing logic here
+        pass_to_computer_service(uuid_str, &addr, rssi);
     }
 
     return 0;
 }
 
 
-static bool is_master_device(void)
+bool is_master_device(void)
 {
 #if defined(CONFIG_DEVICE_IS_MASTER)
     return true;
@@ -79,15 +90,31 @@ static bool is_master_device(void)
 
 
 // Function to pass data to a computer service
-static void pass_to_computer_service(const bt_addr_t *addr, int8_t rssi)
+static void pass_to_computer_service(const char *uuid ,const bt_addr_t *addr, int8_t rssi)
 {
     // Implement the logic to pass the data to your computer service
     // This could involve sending data over UART, USB, or another interface
-    printk("Passing to computer service: Device %02x:%02x:%02x:%02x:%02x:%02x, RSSI %d\n",
-           addr-> val[5], addr->val[4], addr->val[3],
-           addr-> val[2], addr->val[1], addr->val[0],
-           rssi);
+
+
+	char json_buffer[100];
+    snprintf(json_buffer, sizeof(json_buffer), 
+             "{\"uuid\":\"%s\",\"addr\":\"%02x:%02x:%02x:%02x:%02x:%02x\",\"rssi\":%d}\n",
+             uuid,
+             addr->val[5], addr->val[4], addr->val[3],
+             addr->val[2], addr->val[1], addr->val[0],
+             rssi);
+    
+	uart_send_string(json_buffer);
+
+    // uart_tx(uart_dev, json_buffer, strlen(json_buffer), 3 *);
+
 }
+
+static void uart_send_string(const char *str)
+{
+    printk("To-Service: %s", str);
+}
+
 
 static int handle_message(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx, struct net_buf_simple *buf)
 {
@@ -103,75 +130,8 @@ static int handle_message(const struct bt_mesh_model *model, struct bt_mesh_msg_
 	return 0;
 }
 
-/* .. include_startingpoint_chat_cli_rst_1 */
-static void send_message_reply(struct bt_mesh_chat_cli *chat,
-			     struct bt_mesh_msg_ctx *ctx)
-{
-	BT_MESH_MODEL_BUF_DEFINE(msg, BT_MESH_CHAT_CLI_OP_MESSAGE_REPLY,
-				 BT_MESH_CHAT_CLI_MSG_LEN_MESSAGE_REPLY);
-	bt_mesh_model_msg_init(&msg, BT_MESH_CHAT_CLI_OP_MESSAGE_REPLY);
 
-	(void)bt_mesh_model_send(chat->model, ctx, &msg, NULL, NULL);
-}
 
-static int handle_private_message(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
-				  struct net_buf_simple *buf)
-{
-	struct bt_mesh_chat_cli *chat = model->rt->user_data;
-	const uint8_t *msg;
-
-	msg = extract_msg(buf);
-
-	if (chat->handlers->private_message) {
-		chat->handlers->private_message(chat, ctx, msg);
-	}
-
-	send_message_reply(chat, ctx);
-	return 0;
-}
-/* .. include_endpoint_chat_cli_rst_1 */
-
-static int handle_message_reply(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
-				struct net_buf_simple *buf)
-{
-	struct bt_mesh_chat_cli *chat = model->rt->user_data;
-
-	if (chat->handlers->message_reply) {
-		chat->handlers->message_reply(chat, ctx);
-	}
-
-	return 0;
-}
-
-static int handle_presence(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
-			   struct net_buf_simple *buf)
-{
-	struct bt_mesh_chat_cli *chat = model->rt->user_data;
-	enum bt_mesh_chat_cli_presence presence;
-
-	presence = net_buf_simple_pull_u8(buf);
-
-	if (chat->handlers->presence) {
-		chat->handlers->presence(chat, ctx, presence);
-	}
-
-	return 0;
-}
-
-static int handle_presence_get(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
-			       struct net_buf_simple *buf)
-{
-	struct bt_mesh_chat_cli *chat = model->rt->user_data;
-
-	BT_MESH_MODEL_BUF_DEFINE(msg, BT_MESH_CHAT_CLI_OP_PRESENCE,
-				 BT_MESH_CHAT_CLI_MSG_LEN_PRESENCE);
-
-	encode_presence(&msg, chat->presence);
-
-	(void)bt_mesh_model_send(chat->model, ctx, &msg, NULL, NULL);
-
-	return 0;
-}
 
 /* .. include_startingpoint_chat_cli_rst_2 */
 const struct bt_mesh_model_op _bt_mesh_chat_cli_op[] = {
@@ -186,25 +146,11 @@ const struct bt_mesh_model_op _bt_mesh_chat_cli_op[] = {
 		handle_message
 	},
 	{
-		BT_MESH_CHAT_CLI_OP_PRIVATE_MESSAGE,
-		BT_MESH_LEN_MIN(BT_MESH_CHAT_CLI_MSG_MINLEN_MESSAGE),
-		handle_private_message
+		BT_MESH_CHAT_CLI_OP_TIME_SYNC,
+		BT_MESH_LEN_EXACT(BT_MESH_CHAT_CLI_MSG_LEN_TIME_SYNC),
+		handle_time_sync
 	},
-	{
-		BT_MESH_CHAT_CLI_OP_MESSAGE_REPLY,
-		BT_MESH_LEN_EXACT(BT_MESH_CHAT_CLI_MSG_LEN_MESSAGE_REPLY),
-		handle_message_reply
-	},
-	{
-		BT_MESH_CHAT_CLI_OP_PRESENCE,
-		BT_MESH_LEN_EXACT(BT_MESH_CHAT_CLI_MSG_LEN_PRESENCE),
-		handle_presence
-	},
-	{
-		BT_MESH_CHAT_CLI_OP_PRESENCE_GET,
-		BT_MESH_LEN_EXACT(BT_MESH_CHAT_CLI_MSG_LEN_PRESENCE_GET),
-		handle_presence_get
-	},
+	
 	BT_MESH_MODEL_OP_END,
 };
 /* .. include_endpoint_chat_cli_rst_2 */
@@ -368,6 +314,35 @@ int bt_mesh_chat_cli_send_scan_info(struct bt_mesh_chat_cli *chat,
 	
     return bt_mesh_model_publish(chat->model);
 }
+
+static int handle_time_sync(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
+                            struct net_buf_simple *buf)
+{
+    struct bt_mesh_chat_cli *chat = model->rt->user_data;
+    uint64_t sync_time;
+
+    sync_time = net_buf_simple_pull_le64(buf);
+
+	chat->sync_time = sync_time;
+    
+    if (chat->handlers->time_sync) {
+        chat->handlers->time_sync(chat, ctx, &sync_time);
+    }
+
+    return 0;
+}
+
+int bt_mesh_chat_cli_time_sync_send(struct bt_mesh_chat_cli *chat, uint64_t time)
+{
+    struct net_buf_simple *msg = chat->model->pub->msg;
+
+    bt_mesh_model_msg_init(msg, BT_MESH_CHAT_CLI_OP_TIME_SYNC);
+    net_buf_simple_add_le64(msg, time);
+
+    return bt_mesh_model_publish(chat->model);
+}
+
+
 /* .. include_startingpoint_chat_cli_rst_9 */
 int bt_mesh_chat_cli_private_message_send(struct bt_mesh_chat_cli *chat,
 					  uint16_t addr,

@@ -13,13 +13,14 @@
 
 #ifndef BT_MESH_CHAT_CLI_H__
 #define BT_MESH_CHAT_CLI_H__
-
 #include <zephyr/bluetooth/mesh.h>
 #include <bluetooth/mesh/model_types.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define UUID_STR_LEN 5
 
 // operation codes 
 
@@ -132,6 +133,16 @@ struct bt_mesh_chat_cli_handlers {
 				      struct bt_mesh_msg_ctx *ctx,
 				      const uint8_t *msg);
 
+	/** @brief Handler for a time sync message.
+	 *
+	 * @param[in] cli Chat client that received the text message.
+	 * @param[in] ctx Context of the incoming message.
+	 * @param[in] time time in milliseconds since 1970.
+	 */
+	void (*const time_sync)(struct bt_mesh_chat_cli *chat,
+				      struct bt_mesh_msg_ctx *ctx,
+				      const uint64_t *time);
+
 	/** @brief Handler for a reply on a private message.
 	 *
 	 * @param[in] cli Chat client instance that received the reply.
@@ -159,6 +170,8 @@ struct bt_mesh_chat_cli {
 	const struct bt_mesh_chat_cli_handlers *handlers;
 	/** Current Presence value. */
 	enum bt_mesh_chat_cli_presence presence;
+
+	uint64_t sync_time;
 };
 /* .. include_endpoint_chat_cli_rst_3 */
 
@@ -229,3 +242,11 @@ extern const struct bt_mesh_model_cb _bt_mesh_chat_cli_cb;
 
 int bt_mesh_chat_cli_send_scan_info(struct bt_mesh_chat_cli *chat,
                                     const struct bt_le_scan_recv_info *info);
+bool is_master_device(void);
+
+#define BT_MESH_CHAT_CLI_OP_TIME_SYNC 0x05
+#define BT_MESH_CHAT_CLI_MSG_LEN_TIME_SYNC 8
+
+// Add these function declarations
+int bt_mesh_chat_cli_time_sync_send(struct bt_mesh_chat_cli *chat, uint64_t time);
+int bt_mesh_chat_cli_time_sync_receive(struct bt_mesh_chat_cli *chat, uint64_t time);

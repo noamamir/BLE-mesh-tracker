@@ -225,7 +225,7 @@
 			reg = < 0x4000b000 0x1000 >;
 			cc-num = < 0x3 >;
 			interrupts = < 0xb 0x1 >;
-			status = "disabled";
+			status = "okay";
 			clock-frequency = < 0x8000 >;
 			prescaler = < 0x1 >;
 		};

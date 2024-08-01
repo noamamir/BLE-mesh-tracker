@@ -54,7 +54,7 @@ CACHED_BOARD:STRING=nrf52dk_nrf52832
 // listed, e.g. CONF_FILE="prj1.conf;prj2.conf" The CACHED_CONF_FILE
 // is internal Zephyr variable used between CMake runs. To change
 // CONF_FILE, use the CONF_FILE variable.
-CACHED_CONF_FILE:STRING=C:/projects/nrf/BLE-mesh-tracker/prj.conf;C:/projects/nrf/BLE-mesh-tracker/boards/nrf52dk_nrf52832.conf
+CACHED_CONF_FILE:STRING=c:/projects/nrf/BLE-mesh-tracker/prj.conf;c:/projects/nrf/BLE-mesh-tracker/boards/nrf52dk_nrf52832.conf
 
 //Selected shield
 CACHED_SHIELD:STRING=
@@ -133,8 +133,8 @@ CMAKE_CXX_FLAGS_RELEASE:STRING=-O3 -DNDEBUG
 //Flags used by the CXX compiler during RELWITHDEBINFO builds.
 CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 
-//Path to a program.
-CMAKE_C_COMPILER:FILEPATH=C:/ncs/toolchains/cf2149caf2/opt/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc.exe
+//C compiler
+CMAKE_C_COMPILER:STRING=C:/ncs/toolchains/cf2149caf2/opt/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc.exe
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
@@ -319,10 +319,7 @@ DTC:FILEPATH=C:/ncs/toolchains/cf2149caf2/opt/bin/dtc.exe
 // parameter. These settings will override the settings in the
 // board's .dts file. Multiple files may be listed, e.g. DTC_OVERLAY_FILE="dts1.overlay
 // dts2.overlay"
-DTC_OVERLAY_FILE:STRING=
-
-//No help, variable specified on the command line.
-EXTRA_DTC_OVERLAY_FILE:UNINITIALIZED=devicetree.overlay
+DTC_OVERLAY_FILE:STRING=c:/projects/nrf/BLE-mesh-tracker/devicetree.overlay
 
 //Linker BFD compatibility (compiler reported)
 GNULD_LINKER_IS_BFD:BOOL=ON
@@ -429,8 +426,6 @@ Zephyr_DIR:PATH=C:/ncs/v2.6.1/zephyr/share/zephyr-package/cmake
 APPLICATION_CONFIG_DIR:INTERNAL=C:/projects/nrf/BLE-mesh-tracker
 //DT bindings root directories
 CACHED_DTS_ROOT_BINDINGS:INTERNAL=C:/ncs/v2.6.1/nrf/dts/bindings;C:/ncs/v2.6.1/zephyr/dts/bindings
-CLI_CONFIG_DEBUG_OPTIMIZATIONS:INTERNAL=y
-CLI_CONFIG_DEBUG_THREAD_INFO:INTERNAL=y
 //ADVANCED property for variable: CMAKE_ADDR2LINE
 CMAKE_ADDR2LINE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_AR
@@ -482,6 +477,8 @@ CMAKE_CXX_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
 CMAKE_CXX_FLAGS_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_CXX_FLAGS_RELWITHDEBINFO
 CMAKE_CXX_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_C_COMPILER
+CMAKE_C_COMPILER-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_C_COMPILER_AR
 CMAKE_C_COMPILER_AR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_C_COMPILER_RANLIB
@@ -538,7 +535,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=169
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=170
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP
