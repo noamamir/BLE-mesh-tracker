@@ -15,7 +15,6 @@ def listen_to_com_port(boat: Boat):
         try:
             line = nrf_comm.read_response()
             # Read a line from the serial port
-            nrf_comm.sync_time()
 
             if line.find("To-Service:") != -1:
                 json_line = line.split("To-Service:")[1]

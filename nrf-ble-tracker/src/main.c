@@ -127,11 +127,11 @@ int main(void)
 	int err;
 	LOG_INF("Initializing...\n");
     
-    err = uart_init();
-    if (err) {
-        LOG_WRN("UART init failed (err %d)\n", err);
-        return 0;
-    }
+    // err = uart_init();
+    // if (err) {
+    //     LOG_WRN("UART init failed (err %d)\n", err);
+    //     return 0;
+    // }
 
 
 	err = bt_enable(bt_ready);
