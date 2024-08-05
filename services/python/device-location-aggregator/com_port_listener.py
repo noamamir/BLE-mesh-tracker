@@ -1,7 +1,5 @@
 import os
-import threading
 
-import matplotlib.pyplot as plt
 import serial
 import json
 
