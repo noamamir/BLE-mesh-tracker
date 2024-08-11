@@ -64,9 +64,9 @@ extern "C" {
 				       BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID)
 
 /* .. include_endpoint_chat_cli_rst_1 */
-#define BT_MESH_CHAT_CLI_MSG_LEN_HEART_BEAT 6
+#define BT_MESH_CHAT_CLI_MSG_LEN_HEART_BEAT 10
 #define BT_MESH_CHAT_CLI_MSG_LEN_TIME_SYNC 8
-#define BT_MESH_CHAT_CLI_MSG_LEN_SCAN_INFO 11
+#define BT_MESH_CHAT_CLI_MSG_LEN_SCAN_INFO 15
 #define BT_MESH_CHAT_CLI_MSG_MINLEN_MESSAGE 1
 #define BT_MESH_CHAT_CLI_MSG_MAXLEN_MESSAGE (\
 				     CONFIG_BT_MESH_CHAT_CLI_MESSAGE_LENGTH \
@@ -170,7 +170,7 @@ struct bt_mesh_chat_cli_handlers {
 struct bt_mesh_heartbeat_msg
 {
 	const uint16_t device_id;
-	uint32_t time_sent;
+	uint64_t time_sent;
 };
 
 struct bt_mesh_chat_cli {
