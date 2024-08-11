@@ -16,7 +16,7 @@ LOG_MODULE_DECLARE(chat);
 
 
 //#if defined(CONFIG_COUNTER_NRF_RTC)
-
+#define UART_DEVICE_NODE DT_CHOSEN(zephyr_console)
 #define TIMER DT_ALIAS(rtc2)
 // #else
 // #error "Unsupported board: This sample requires a counter device."
@@ -25,13 +25,13 @@ LOG_MODULE_DECLARE(chat);
 // static const struct device *uart_dev;
 
 
-static void pass_to_computer_service(const char *uuid ,const bt_addr_t *addr, int8_t rssi);
+static void pass_tag_msg_to_pc(const char *uuid, const bt_addr_t *addr, int8_t rssi, uint32_t time_sent);
+static void pass_heartbeat_msg_to_pc(const char *uuid ,const uint16_t device_id, const uint32_t time_sent);
+
 bool is_master_device(void);
 static void uart_send_string(const char *str);
-static int handle_time_sync(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
-                            struct net_buf_simple *buf);
 static void init_counter(struct bt_mesh_chat_cli *chat);
-
+int get_current_time(struct device *counter_dev);
 
 
 BUILD_ASSERT(BT_MESH_MODEL_BUF_LEN(BT_MESH_CHAT_CLI_OP_MESSAGE,
@@ -65,26 +65,39 @@ bool is_master_device(void)
 #endif
 }
 
-// Function to pass data to a computer service
-static void pass_to_computer_service(const char *uuid ,const bt_addr_t *addr, int8_t rssi)
+static void pass_tag_msg_to_pc(const char *uuid, const bt_addr_t *addr, int8_t rssi, uint32_t time_sent)
+{
+    char json_buffer[150];
+    snprintf(json_buffer, sizeof(json_buffer),
+             "{\"uuid\":\"%s\",\"addr\":\"%02x:%02x:%02x:%02x:%02x:%02x\",\"rssi\":%d,\"time_sent\":%lu}\n",
+             uuid,
+             addr->val[5], addr->val[4], addr->val[3],
+             addr->val[2], addr->val[1], addr->val[0],
+             rssi,
+             (unsigned long)time_sent);
+
+    printk("TAG: %s", json_buffer);
+}
+
+// Function to pass hearbeat msg to a computer service
+static void pass_heartbeat_msg_to_pc(const char *uuid ,const uint16_t device_id, const uint32_t time_sent)
 {
     // Implement the logic to pass the data to your computer service
     // This could involve sending data over UART, USB, or another interface
 
-
 	char json_buffer[100];
-    snprintf(json_buffer, sizeof(json_buffer), 
-             "{\"uuid\":\"%s\",\"addr\":\"%02x:%02x:%02x:%02x:%02x:%02x\",\"rssi\":%d}\n",
+    int written = snprintf(json_buffer, sizeof(json_buffer), 
+             "{\"uuid\":\"%s\",\"device_id\":%u,\"time_sent\":%lu}\n",
              uuid,
-             addr->val[5], addr->val[4], addr->val[3],
-             addr->val[2], addr->val[1], addr->val[0],
-             rssi);
+             device_id,
+             (unsigned long)time_sent);
     
-	uart_send_string(json_buffer);
+    
+	printk("HEARTBEAT: %s", json_buffer);
 
-    // uart_tx(uart_dev, json_buffer, strlen(json_buffer), 3 *);
 
 }
+
 
 static void uart_send_string(const char *str)
 {
@@ -110,7 +123,8 @@ int handle_scan_info(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *
 {
     bt_addr_t addr;
     int8_t rssi;
- 	char uuid_str[UUID_STR_LEN];
+    char uuid_str[UUID_STR_LEN];
+    uint32_t time_sent;
 
     // Extract address from the message
     memcpy(&addr, net_buf_simple_pull_mem(buf, BT_ADDR_SIZE), BT_ADDR_SIZE);
@@ -118,20 +132,48 @@ int handle_scan_info(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *
     // Extract RSSI from the message
     rssi = net_buf_simple_pull_u8(buf);
 
+    // Extract time sent from the message
+    time_sent = net_buf_simple_pull_le32(buf);
+
     // Convert address to string for logging
     char addr_str[BT_ADDR_STR_LEN];
     bt_addr_to_str(&addr, addr_str, sizeof(addr_str));
 
- 	// Convert the source address (UUID) to string
+    // Convert the source address (UUID) to string
     snprintf(uuid_str, sizeof(uuid_str), "%04x", ctx->addr);
 
     // Check if this device is the master device
     if (is_master_device()) {
-        pass_to_computer_service(uuid_str, &addr, rssi);
+        pass_tag_msg_to_pc(uuid_str, &addr, rssi, time_sent);
     }
 
     return 0;
 }
+
+static int handle_heartbeat(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
+                     struct net_buf_simple *buf)
+{
+	uint16_t device_id;
+	uint32_t time_sent;
+	char uuid_str[UUID_STR_LEN];
+
+  // Extract time_sent from the message (4 bytes)
+    time_sent = net_buf_simple_pull_le32(buf);
+
+    // Extract device_id from the message (2 bytes)
+    device_id = net_buf_simple_pull_le16(buf);
+
+    // Convert the source address (UUID) to string
+    snprintf(uuid_str, sizeof(uuid_str), "%04x", ctx->addr);
+
+	// Check if this device is the master device
+    if (is_master_device()) {
+       	pass_heartbeat_msg_to_pc(uuid_str, device_id, time_sent);
+    }
+
+	return 0;
+}
+
 
 static int handle_time_sync(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
                             struct net_buf_simple *buf)
@@ -150,17 +192,17 @@ static int handle_time_sync(const struct bt_mesh_model *model, struct bt_mesh_ms
 }
 
 static void init_counter(struct bt_mesh_chat_cli *chat) {
-	// chat->counter_dev = DEVICE_DT_GET(TIMER);
-    // if (!device_is_ready(chat->counter_dev)) {
-    //     LOG_ERR("Counter device not ready");
-    //     return;
-    // }
+	chat->counter_dev = DEVICE_DT_GET(TIMER);
+    if (!device_is_ready(chat->counter_dev)) {
+        LOG_ERR("Counter device not ready");
+        return;
+    }
 
-	// int err = counter_start(chat->counter_dev);
-    // if (err != 0) {
-    //     LOG_ERR("Failed to start counter: %d", err);
-    //     return;
-    // }
+	int err = counter_start(chat->counter_dev);
+    if (err != 0) {
+        LOG_ERR("Failed to start counter: %d", err);
+        return;
+    }
 }
 
 /* .. include_startingpoint_chat_cli_rst_2 */
@@ -177,10 +219,15 @@ const struct bt_mesh_model_op _bt_mesh_chat_cli_op[] = {
 	},
 	{
 		BT_MESH_CHAT_CLI_OP_TIME_SYNC,
-		BT_MESH_LEN_EXACT(BT_MESH_CHAT_CLI_MSG_LEN_TIME_SYNC),
+		BT_MESH_LEN_EXACT(BT_MESH_CHAT_CLI_MSG_LEN_HEART_BEAT),
 		handle_time_sync
 	},
-	
+	{
+		BT_MESH_CHAT_CLI_OP_HEARTBEAT,
+		BT_MESH_LEN_EXACT(BT_MESH_CHAT_CLI_MSG_LEN_HEART_BEAT),
+		handle_heartbeat
+	},
+
 	BT_MESH_MODEL_OP_END,
 };
 /* .. include_endpoint_chat_cli_rst_2 */
@@ -336,12 +383,18 @@ int bt_mesh_chat_cli_send_scan_info(struct bt_mesh_chat_cli *chat,
 {
     struct net_buf_simple *buf = chat->model->pub->msg;
     bt_mesh_model_msg_init(buf, BT_MESH_CHAT_CLI_OP_SCAN_INFO);
+
+    uint32_t now_ms = get_current_time(chat->counter_dev);
+
     // Add address
     net_buf_simple_add_mem(buf, &info->addr->a, BT_ADDR_SIZE);
 
     // Add RSSI
     net_buf_simple_add_u8(buf, info->rssi);
-	
+
+    // Add time sent
+    net_buf_simple_add_le32(buf, now_ms);
+
     return bt_mesh_model_publish(chat->model);
 }
 
@@ -355,16 +408,22 @@ int bt_mesh_chat_cli_time_sync_send(struct bt_mesh_chat_cli *chat, uint64_t *tim
     return bt_mesh_model_publish(chat->model);
 }
 
-int bt_mesh_chat_cli_send_heartbeat(struct bt_mesh_chat_cli *chat,
-                                    const struct bt_mesh_heartbeat_msg *heartbeat)
+int bt_mesh_chat_cli_send_heartbeat(struct bt_mesh_chat_cli *chat)
 {
+	struct bt_mesh_heartbeat_msg heartbeat = {
+	.device_id = chat -> model->id,
+	.time_sent = get_current_time((struct device *)chat->counter_dev)
+	};
+
     struct net_buf_simple *buf = chat->model->pub->msg;
     bt_mesh_model_msg_init(buf, BT_MESH_CHAT_CLI_OP_HEARTBEAT);
+    
     // Add time sent
-    net_buf_simple_add_mem(buf, &heartbeat->time_sent, sizeof(heartbeat->time_sent));
+    net_buf_simple_add_le32(buf, heartbeat.time_sent);
+
 
     // Add device id
-    net_buf_simple_add_u8(buf, heartbeat->device_id);
+    net_buf_simple_add_le16(buf, heartbeat.device_id);
 	
     return bt_mesh_model_publish(chat->model);
 }
@@ -394,3 +453,22 @@ int bt_mesh_chat_cli_private_message_send(struct bt_mesh_chat_cli *chat,
 	return bt_mesh_model_send(chat->model, &ctx, &buf, NULL, NULL);
 }
 /* .. include_endpoint_chat_cli_rst_9 */
+int get_current_time(struct device *counter_dev)
+{
+	int err;
+    uint32_t now_ticks;
+    uint64_t now_us;
+    uint32_t now_ms;
+
+	err = counter_get_value(counter_dev, &now_ticks);
+    if (err) {
+        LOG_ERR("Failed to read counter value (err %d)", err);
+        return 0;
+    }
+	
+
+	now_us = counter_ticks_to_us(counter_dev, now_ticks);
+    now_ms = (uint32_t)(now_us / 1000);
+
+	return now_ms;
+}

@@ -64,7 +64,9 @@ extern "C" {
 				       BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID)
 
 /* .. include_endpoint_chat_cli_rst_1 */
-#define BT_MESH_CHAT_CLI_MSG_LEN_SCAN_INFO 7
+#define BT_MESH_CHAT_CLI_MSG_LEN_HEART_BEAT 6
+#define BT_MESH_CHAT_CLI_MSG_LEN_TIME_SYNC 8
+#define BT_MESH_CHAT_CLI_MSG_LEN_SCAN_INFO 11
 #define BT_MESH_CHAT_CLI_MSG_MINLEN_MESSAGE 1
 #define BT_MESH_CHAT_CLI_MSG_MAXLEN_MESSAGE (\
 				     CONFIG_BT_MESH_CHAT_CLI_MESSAGE_LENGTH \
@@ -253,8 +255,7 @@ int bt_mesh_chat_cli_private_message_send(struct bt_mesh_chat_cli *chat,
  * @retval -EINVAL The model is not bound to an application key.
  * @retval -EAGAIN The device has not been provisioned.
  */
-int bt_mesh_chat_cli_send_heartbeat(struct bt_mesh_chat_cli *chat,
-                                    const struct bt_mesh_heartbeat_msg *heartbeat);
+int bt_mesh_chat_cli_send_heartbeat(struct bt_mesh_chat_cli *chat);
 
 /** @cond INTERNAL_HIDDEN */
 extern const struct bt_mesh_model_op _bt_mesh_chat_cli_op[];
@@ -273,7 +274,6 @@ int bt_mesh_chat_cli_send_scan_info(struct bt_mesh_chat_cli *chat,
                                     const struct bt_le_scan_recv_info *info);
 bool is_master_device(void);
 
-#define BT_MESH_CHAT_CLI_MSG_LEN_TIME_SYNC 8
 
 // Add these function declarations
 int bt_mesh_chat_cli_time_sync_send(struct bt_mesh_chat_cli *chat, uint64_t *time);

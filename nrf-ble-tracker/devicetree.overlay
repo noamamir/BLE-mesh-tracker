@@ -2,10 +2,9 @@
 	current-speed = <460800>;
 };
 
-
 / {
     aliases {
-        timer1 = &timer1;
+        rtc2 = &rtc2;
     };
 };
 

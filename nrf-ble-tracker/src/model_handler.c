@@ -477,32 +477,8 @@ void send_time_sync(uint64_t *time)
 
 void send_hearbeat_msg()
 {
-	int err;
-    uint32_t now_ticks;
-    uint64_t now_us;
-    uint32_t now_ms;
 
-	err = counter_get_value(chat.counter_dev, &now_ticks);
-    if (err) {
-        LOG_ERR("Failed to read counter value (err %d)", err);
-        return;
-    }
-	
-
-	now_us = counter_ticks_to_us(chat.counter_dev, now_ticks);
-    now_ms = (uint32_t)(now_us / 1000);
-
-	struct bt_mesh_heartbeat_msg heartbeat = {
-		.device_id = chat.model->id,
-		.time_sent = 0
-	};
-	
-	if (chat.sync_time != 0) 
-	{
-		heartbeat.time_sent = now_ms + chat.sync_time;
-	} 
-	
-	err = bt_mesh_chat_cli_send_heartbeat(&chat, &heartbeat);
+	int err = bt_mesh_chat_cli_send_heartbeat(&chat);
 
     if (err) {
         LOG_WRN("Failed to send time sync message: %d", err);

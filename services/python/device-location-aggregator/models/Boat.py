@@ -1,7 +1,7 @@
 import logging
 import threading
 import time
-from typing import Dict
+from typing import Dict, Callable
 
 import numpy
 from matplotlib import pyplot as plt
@@ -16,13 +16,36 @@ class Boat:
     registered_receivers: Dict[str, Receiver] = {}
     beacons_keepalive_interval = 10 * 1000  # in millies
     boat_drawing: Hallway = Hallway()
+    emit_tag_message_callback: Callable = None
+    emit_heartbeat_callback: Callable = None
 
-    def handle_incoming_adv_packet(self, packet: AdvertisingPacket):
+    def set_tag_message_callback(self, callback: Callable[[dict], None]):
+        self.emit_tag_message_callback = callback
+
+    def set_heartbeat_message_callback(self, callback: Callable[[dict], None]):
+        self.emit_heartbeat_callback = callback
+
+    def handle_incoming_tag_messages(self, packet: AdvertisingPacket):
         if packet.uuid in self.registered_receivers:
             beacon = Beacon(packet.addr, packet.rssi)
             self.registered_receivers[packet.uuid].set_beacon(beacon)
         else:
             self.register_receiver(packet.uuid)
+        tag_message = {
+            'uuid': packet.uuid,
+            'addr': packet.addr,
+            'rssi': packet.rssi
+        }
+
+        self.emit_tag_message_callback(tag_message)
+
+    def handle_incoming_heartbeat(self, uuid, device_id, time_sent):
+        heartbeat_message = {
+            'uuid': uuid,
+            'device_id': device_id,
+            'time_sent': time_sent
+        }
+        emit_heartbeat_message(heartbeat_message)
 
     def register_receiver(self, receiver_name: str):
         self.registered_receivers[receiver_name] = Receiver(receiver_name)
