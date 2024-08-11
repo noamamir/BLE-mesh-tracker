@@ -54,6 +54,15 @@ extern "C" {
 #define BT_MESH_CHAT_CLI_OP_SCAN_INFO BT_MESH_MODEL_OP_3(0x0F, \
 				       BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID)
 
+/** opeartion code of send time sync */
+#define BT_MESH_CHAT_CLI_OP_TIME_SYNC BT_MESH_MODEL_OP_3(0x09, \
+				       BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID)
+
+
+/** opeartion code of send time sync */
+#define BT_MESH_CHAT_CLI_OP_HEARTBEAT BT_MESH_MODEL_OP_3(0x08, \
+				       BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID)
+
 /* .. include_endpoint_chat_cli_rst_1 */
 #define BT_MESH_CHAT_CLI_MSG_LEN_SCAN_INFO 7
 #define BT_MESH_CHAT_CLI_MSG_MINLEN_MESSAGE 1
@@ -133,15 +142,15 @@ struct bt_mesh_chat_cli_handlers {
 				      struct bt_mesh_msg_ctx *ctx,
 				      const uint8_t *msg);
 
-	/** @brief Handler for a time sync message.
-	 *
-	 * @param[in] cli Chat client that received the text message.
-	 * @param[in] ctx Context of the incoming message.
-	 * @param[in] time time in milliseconds since 1970.
-	 */
-	void (*const time_sync)(struct bt_mesh_chat_cli *chat,
-				      struct bt_mesh_msg_ctx *ctx,
-				      const uint64_t *time);
+	// /** @brief Handler for a time sync message.
+	//  *
+	//  * @param[in] cli Chat client that received the text message.
+	//  * @param[in] ctx Context of the incoming message.
+	//  * @param[in] time time in milliseconds since 1970.
+	//  */
+	// void (*const time_sync)(struct bt_mesh_chat_cli *chat,
+	// 			      struct bt_mesh_msg_ctx *ctx,
+	// 			      const uint64_t *time);
 
 	/** @brief Handler for a reply on a private message.
 	 *
@@ -156,6 +165,12 @@ struct bt_mesh_chat_cli_handlers {
 /**
  * Bluetooth Mesh Chat Client model context.
  */
+struct bt_mesh_heartbeat_msg
+{
+	const uint16_t device_id;
+	uint32_t time_sent;
+};
+
 struct bt_mesh_chat_cli {
 	/** Access model pointer. */
 	const struct bt_mesh_model *model;
@@ -172,6 +187,8 @@ struct bt_mesh_chat_cli {
 	enum bt_mesh_chat_cli_presence presence;
 
 	uint64_t sync_time;
+
+	const struct device *counter_dev;
 };
 /* .. include_endpoint_chat_cli_rst_3 */
 
@@ -227,6 +244,18 @@ int bt_mesh_chat_cli_private_message_send(struct bt_mesh_chat_cli *chat,
 					  uint16_t addr,
 					  const uint8_t *msg);
 
+/** @brief Send a heartbeat message to a specified destination.
+ *
+ * @param[in] cli  Chat Client model instance to send the message.
+ * @param[in] heartbeat heartbeat object to send.
+ *
+ * @retval 0 Successfully sent the message.
+ * @retval -EINVAL The model is not bound to an application key.
+ * @retval -EAGAIN The device has not been provisioned.
+ */
+int bt_mesh_chat_cli_send_heartbeat(struct bt_mesh_chat_cli *chat,
+                                    const struct bt_mesh_heartbeat_msg *heartbeat);
+
 /** @cond INTERNAL_HIDDEN */
 extern const struct bt_mesh_model_op _bt_mesh_chat_cli_op[];
 extern const struct bt_mesh_model_cb _bt_mesh_chat_cli_cb;
@@ -244,9 +273,10 @@ int bt_mesh_chat_cli_send_scan_info(struct bt_mesh_chat_cli *chat,
                                     const struct bt_le_scan_recv_info *info);
 bool is_master_device(void);
 
-#define BT_MESH_CHAT_CLI_OP_TIME_SYNC 0x05
 #define BT_MESH_CHAT_CLI_MSG_LEN_TIME_SYNC 8
 
 // Add these function declarations
-int bt_mesh_chat_cli_time_sync_send(struct bt_mesh_chat_cli *chat, uint64_t time);
-int bt_mesh_chat_cli_time_sync_receive(struct bt_mesh_chat_cli *chat, uint64_t time);
+int bt_mesh_chat_cli_time_sync_send(struct bt_mesh_chat_cli *chat, uint64_t *time);
+int bt_mesh_chat_cli_time_sync_receive(struct bt_mesh_chat_cli *chat, uint64_t *time);
+
+

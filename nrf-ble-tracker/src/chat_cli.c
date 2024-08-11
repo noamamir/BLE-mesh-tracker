@@ -8,13 +8,21 @@
 #include "chat_cli.h"
 #include "mesh/net.h"
 #include <string.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/counter.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(chat);
 
-#define UART_DEVICE_NODE DT_NODELABEL(uart0)
 
-static const struct device *uart_dev;
+//#if defined(CONFIG_COUNTER_NRF_RTC)
+
+#define TIMER DT_ALIAS(rtc2)
+// #else
+// #error "Unsupported board: This sample requires a counter device."
+// #endif
+
+// static const struct device *uart_dev;
 
 
 static void pass_to_computer_service(const char *uuid ,const bt_addr_t *addr, int8_t rssi);
@@ -22,7 +30,8 @@ bool is_master_device(void);
 static void uart_send_string(const char *str);
 static int handle_time_sync(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
                             struct net_buf_simple *buf);
-#define UART_DEVICE_NODE DT_NODELABEL(uart0)
+static void init_counter(struct bt_mesh_chat_cli *chat);
+
 
 
 BUILD_ASSERT(BT_MESH_MODEL_BUF_LEN(BT_MESH_CHAT_CLI_OP_MESSAGE,
@@ -47,36 +56,6 @@ static const uint8_t *extract_msg(struct net_buf_simple *buf)
 	return net_buf_simple_pull_mem(buf, buf->len);
 }
 
-
-int handle_scan_info(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
-                     struct net_buf_simple *buf)
-{
-    bt_addr_t addr;
-    int8_t rssi;
- 	char uuid_str[UUID_STR_LEN];
-
-    // Extract address from the message
-    memcpy(&addr, net_buf_simple_pull_mem(buf, BT_ADDR_SIZE), BT_ADDR_SIZE);
-
-    // Extract RSSI from the message
-    rssi = net_buf_simple_pull_u8(buf);
-
-    // Convert address to string for logging
-    char addr_str[BT_ADDR_STR_LEN];
-    bt_addr_to_str(&addr, addr_str, sizeof(addr_str));
-
- 	// Convert the source address (UUID) to string
-    snprintf(uuid_str, sizeof(uuid_str), "%04x", ctx->addr);
-
-    // Check if this device is the master device
-    if (is_master_device()) {
-        pass_to_computer_service(uuid_str, &addr, rssi);
-    }
-
-    return 0;
-}
-
-
 bool is_master_device(void)
 {
 #if defined(CONFIG_DEVICE_IS_MASTER)
@@ -85,9 +64,6 @@ bool is_master_device(void)
     return false;
 #endif
 }
-
-
-
 
 // Function to pass data to a computer service
 static void pass_to_computer_service(const char *uuid ,const bt_addr_t *addr, int8_t rssi)
@@ -122,7 +98,6 @@ static int handle_message(const struct bt_mesh_model *model, struct bt_mesh_msg_
 	const uint8_t *msg;
 
 	msg = extract_msg(buf);
-	// TODO: printk("handled message %s \n", buf);
 	if (chat->handlers->message) {
 		chat->handlers->message(chat, ctx, msg);
 	}
@@ -130,8 +105,63 @@ static int handle_message(const struct bt_mesh_model *model, struct bt_mesh_msg_
 	return 0;
 }
 
+int handle_scan_info(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
+                     struct net_buf_simple *buf)
+{
+    bt_addr_t addr;
+    int8_t rssi;
+ 	char uuid_str[UUID_STR_LEN];
 
+    // Extract address from the message
+    memcpy(&addr, net_buf_simple_pull_mem(buf, BT_ADDR_SIZE), BT_ADDR_SIZE);
 
+    // Extract RSSI from the message
+    rssi = net_buf_simple_pull_u8(buf);
+
+    // Convert address to string for logging
+    char addr_str[BT_ADDR_STR_LEN];
+    bt_addr_to_str(&addr, addr_str, sizeof(addr_str));
+
+ 	// Convert the source address (UUID) to string
+    snprintf(uuid_str, sizeof(uuid_str), "%04x", ctx->addr);
+
+    // Check if this device is the master device
+    if (is_master_device()) {
+        pass_to_computer_service(uuid_str, &addr, rssi);
+    }
+
+    return 0;
+}
+
+static int handle_time_sync(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
+                            struct net_buf_simple *buf)
+{
+    struct bt_mesh_chat_cli *chat = model->rt->user_data;
+    uint64_t sync_time;
+
+    sync_time = net_buf_simple_pull_le64(buf);
+
+	chat->sync_time = sync_time;
+    
+	init_counter(chat);
+	
+
+    return 0;
+}
+
+static void init_counter(struct bt_mesh_chat_cli *chat) {
+	// chat->counter_dev = DEVICE_DT_GET(TIMER);
+    // if (!device_is_ready(chat->counter_dev)) {
+    //     LOG_ERR("Counter device not ready");
+    //     return;
+    // }
+
+	// int err = counter_start(chat->counter_dev);
+    // if (err != 0) {
+    //     LOG_ERR("Failed to start counter: %d", err);
+    //     return;
+    // }
+}
 
 /* .. include_startingpoint_chat_cli_rst_2 */
 const struct bt_mesh_model_op _bt_mesh_chat_cli_op[] = {
@@ -315,30 +345,27 @@ int bt_mesh_chat_cli_send_scan_info(struct bt_mesh_chat_cli *chat,
     return bt_mesh_model_publish(chat->model);
 }
 
-static int handle_time_sync(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
-                            struct net_buf_simple *buf)
-{
-    struct bt_mesh_chat_cli *chat = model->rt->user_data;
-    uint64_t sync_time;
-
-    sync_time = net_buf_simple_pull_le64(buf);
-
-	chat->sync_time = sync_time;
-    
-    if (chat->handlers->time_sync) {
-        chat->handlers->time_sync(chat, ctx, &sync_time);
-    }
-
-    return 0;
-}
-
-int bt_mesh_chat_cli_time_sync_send(struct bt_mesh_chat_cli *chat, uint64_t time)
+int bt_mesh_chat_cli_time_sync_send(struct bt_mesh_chat_cli *chat, uint64_t *time)
 {
     struct net_buf_simple *msg = chat->model->pub->msg;
 
     bt_mesh_model_msg_init(msg, BT_MESH_CHAT_CLI_OP_TIME_SYNC);
-    net_buf_simple_add_le64(msg, time);
+    net_buf_simple_add_le64(msg, *time);
 
+    return bt_mesh_model_publish(chat->model);
+}
+
+int bt_mesh_chat_cli_send_heartbeat(struct bt_mesh_chat_cli *chat,
+                                    const struct bt_mesh_heartbeat_msg *heartbeat)
+{
+    struct net_buf_simple *buf = chat->model->pub->msg;
+    bt_mesh_model_msg_init(buf, BT_MESH_CHAT_CLI_OP_HEARTBEAT);
+    // Add time sent
+    net_buf_simple_add_mem(buf, &heartbeat->time_sent, sizeof(heartbeat->time_sent));
+
+    // Add device id
+    net_buf_simple_add_u8(buf, heartbeat->device_id);
+	
     return bt_mesh_model_publish(chat->model);
 }
 

@@ -24,15 +24,15 @@
 #define UART_DEVICE_NODE DT_CHOSEN(zephyr_console)
 #define UART_BUF_SIZE 256
 
-static const struct device *uart_dev;
-static uint8_t uart_rx_buf[UART_BUF_SIZE];
-static uint8_t uart_tx_buf[UART_BUF_SIZE];
+ static const struct device *uart_dev;
+// static uint8_t uart_rx_buf[UART_BUF_SIZE];
+// static uint8_t uart_tx_buf[UART_BUF_SIZE];
 
 LOG_MODULE_REGISTER(chat, CONFIG_LOG_DEFAULT_LEVEL);
 // static void init_scanner(void);
 static void scan_recv_cb(const struct bt_le_scan_recv_info *info, struct net_buf_simple *buf);
 static void uart_cb(const struct device *dev, void *user_data);
-
+static int uart_init(void);
 static void uart_cb(const struct device *dev, void *user_data)
 {
     uint8_t c;
@@ -54,7 +54,7 @@ static void uart_cb(const struct device *dev, void *user_data)
             // Process the command
             if (strncmp((char *)rx_buf, "SYNC_TIME:", 10) == 0) {
                 uint64_t time = strtoull((char *)rx_buf + 10, NULL, 10);
-                initiate_time_sync(time);
+                send_time_sync(&time);
                 
                 // Send acknowledgement
                 char ack[] = "Time sync received\n";
@@ -80,8 +80,6 @@ static void bt_ready(int err)
      // Add a small delay before starting the scanner
 
     // Initialize scanner after mesh is initialized
-  
-
     dk_leds_init();
     dk_buttons_init(NULL);
  
@@ -127,17 +125,18 @@ int main(void)
 	int err;
 	LOG_INF("Initializing...\n");
     
-    // err = uart_init();
-    // if (err) {
-    //     LOG_WRN("UART init failed (err %d)\n", err);
-    //     return 0;
-    // }
+    err = uart_init();
+    if (err) {
+        LOG_WRN("UART init failed (err %d)\n", err);
+        return 0;
+    }
 
 
 	err = bt_enable(bt_ready);
 	if (err) {
 		LOG_WRN("Bluetooth init failed (err %d)\n", err);
 	}
+
 
     if (is_master_device()) {
         LOG_INF("Device is master device \n");
@@ -147,7 +146,9 @@ int main(void)
 
 	 // Keep the main thread running
     while (1) {
-        k_sleep(K_SECONDS(1));
+        k_sleep(K_SECONDS(3));
+        // send_hearbeat_msg();
+        
     }
 
 	return 0;
@@ -163,51 +164,7 @@ static void scan_recv_cb(const struct bt_le_scan_recv_info *info, struct net_buf
         if (!is_master_device()) {
             LOG_INF("Device found: %s (RSSI %d)\n", addr, info->rssi);
         }
-        send_adv_message(info);
+        send_tag_message(info);
     }
 }
-
-
-
-// static void init_scanner(void)
-// {
-//     struct bt_le_scan_param scan_param = {
-//         .type = BT_LE_SCAN_TYPE_PASSIVE,
-//         .options = BT_LE_SCAN_OPT_NONE,
-//         .interval = BT_GAP_SCAN_SLOW_INTERVAL_2,
-//         .window = BT_GAP_SCAN_SLOW_WINDOW_2,
-//     };
-//     int err;
-
-//     printk("Starting scanner...\n");
-
-//     // Check if scanning is already active
-//     if (bt_le_scan_stop() == -EALREADY) {
-//         printk("Scanning was not active\n");
-//     }
-
-//     if (!bt_is_ready()) {
-//         printk("Bluetooth stack not ready\n");
-//         return;
-//     }
-
-//     // Try to start scanning with the specified parameters
-//     // err = bt_le_scan_start(&scan_param, scan_cb);
-//     // if (err) {
-//     //     printk("Scanning failed to start (err %d)\n", err);
-        
-//     //     // If the parameters are invalid, try with default parameters
-//     //     if (err == -EINVAL) {
-//     //         printk("Trying with default scan parameters...\n");
-//     //         err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, scan_cb);
-//     //         if (err) {
-//     //             printk("Default scanning failed to start (err %d)\n", err);
-//     //         } else {
-//     //             printk("Default scanning started successfully\n");
-//     //         }
-//     //     }
-//     // } else {
-//     //     printk("Scanning started successfully\n");
-//     // }
-// }
 

@@ -12,6 +12,7 @@
 #include <zephyr/drivers/counter.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/shell/shell_uart.h>
+#include <zephyr/device.h>
 
 #include "chat_cli.h"
 #include "model_handler.h"
@@ -19,9 +20,10 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(chat);
 
+
 static const struct shell *chat_shell;
-static const struct device *rtc_dev;
-static uint64_t *rtc_start_time;
+// static const struct device *rtc_dev;
+// static uint64_t *rtc_start_time;
 
 
 /******************************************************************************/
@@ -213,21 +215,23 @@ static void handle_chat_message_reply(struct bt_mesh_chat_cli *chat,
 	shell_print(chat_shell, "<0x%04X> received the message", ctx->addr);
 }
 
-static void handle_chat_time_sync(struct bt_mesh_chat_cli *chat, struct bt_mesh_msg_ctx *ctx ,uint64_t *time)
-{
-    if (!rtc_dev) {
-        rtc_dev = DEVICE_DT_GET(DT_NODELABEL(rtc0));
-        if (!device_is_ready(rtc_dev)) {
-            LOG_ERR("RTC device not ready");
-            return;
-        }
-    }
+// static void handle_chat_time_sync(struct bt_mesh_chat_cli *chat, struct bt_mesh_msg_ctx *ctx ,uint64_t *time)
+// {
+//     if (!rtc_dev) {
+//         rtc_dev = DEVICE_DT_GET(DT_NODELABEL(rtc0));
+//         if (!device_is_ready(rtc_dev)) {
+//             LOG_ERR("RTC device not ready");
+//             return;
+//         }
+//     }
 
-    rtc_start_time = time;
-    counter_start(rtc_dev);
+//     rtc_start_time = time;
+//     counter_start(rtc_dev);
 
-    LOG_INF("Time synced: %llu", time);
-}
+//     LOG_INF("Time synced: %llu", time);
+// }
+
+
 
 
 static const struct bt_mesh_chat_cli_handlers chat_handlers = {
@@ -236,12 +240,12 @@ static const struct bt_mesh_chat_cli_handlers chat_handlers = {
 	.message = handle_chat_message,
 	.private_message = handle_chat_private_message,
 	.message_reply = handle_chat_message_reply,
-	.time_sync = handle_chat_time_sync,
 };
 
 /* .. include_startingpoint_model_handler_rst_1 */
 static struct bt_mesh_chat_cli chat = {
 	.handlers = &chat_handlers,
+	.sync_time = 0
 };
 
 static struct bt_mesh_elem elements[] = {
@@ -451,7 +455,7 @@ const struct bt_mesh_comp *model_handler_init(void)
 	return &comp;
 }
 
-void send_adv_message(const struct bt_le_scan_recv_info *device)
+void send_tag_message(const struct bt_le_scan_recv_info *device)
 {
 	
 	int err = bt_mesh_chat_cli_send_scan_info(&chat, device);
@@ -462,10 +466,44 @@ void send_adv_message(const struct bt_le_scan_recv_info *device)
 
 }
 
-// Add this function to initiate time sync from the main node
-void initiate_time_sync(uint64_t *time)
+// Add this unction to initiate time sync from the main node
+void send_time_sync(uint64_t *time)
 {
     int err = bt_mesh_chat_cli_time_sync_send(&chat, time);
+    if (err) {
+        LOG_WRN("Failed to send time sync message: %d", err);
+    }
+}
+
+void send_hearbeat_msg()
+{
+	int err;
+    uint32_t now_ticks;
+    uint64_t now_us;
+    uint32_t now_ms;
+
+	err = counter_get_value(chat.counter_dev, &now_ticks);
+    if (err) {
+        LOG_ERR("Failed to read counter value (err %d)", err);
+        return;
+    }
+	
+
+	now_us = counter_ticks_to_us(chat.counter_dev, now_ticks);
+    now_ms = (uint32_t)(now_us / 1000);
+
+	struct bt_mesh_heartbeat_msg heartbeat = {
+		.device_id = chat.model->id,
+		.time_sent = 0
+	};
+	
+	if (chat.sync_time != 0) 
+	{
+		heartbeat.time_sent = now_ms + chat.sync_time;
+	} 
+	
+	err = bt_mesh_chat_cli_send_heartbeat(&chat, &heartbeat);
+
     if (err) {
         LOG_WRN("Failed to send time sync message: %d", err);
     }

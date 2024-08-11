@@ -32,6 +32,10 @@ config BT_MESH_CHAT_SAMPLE_PRESENCE_CACHE_SIZE
 	  Presence cache stores previously received presence of chat clients.
 	  Recommended to be as big as number of chat clients in the mesh network.
 
+config COUNTER_SAM0_TC32
+	bool
+	default y if BOARD_ATSAMD20_XPRO
+
 endmenu
 
 module = BT_MESH_CHAT_CLI
