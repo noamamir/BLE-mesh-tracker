@@ -113,7 +113,7 @@ static int uart_init(void)
         printk("UART device not found!\n");
         return -ENODEV;
     }
-
+    k_sleep(K_SECONDS(1));
     uart_irq_callback_user_data_set(uart_dev, uart_cb, NULL);
     uart_irq_rx_enable(uart_dev);
 
@@ -125,17 +125,19 @@ int main(void)
 	int err;
 	LOG_INF("Initializing...\n");
     
+
+	err = bt_enable(bt_ready);
+	if (err) {
+		LOG_WRN("Bluetooth init failed (err %d)\n", err);
+	}
+
     err = uart_init();
     if (err) {
         LOG_WRN("UART init failed (err %d)\n", err);
         return 0;
     }
 
-
-	err = bt_enable(bt_ready);
-	if (err) {
-		LOG_WRN("Bluetooth init failed (err %d)\n", err);
-	}
+    LOG_INF("Uart initialized\n");
 
 
     if (is_master_device()) {
@@ -147,7 +149,7 @@ int main(void)
 	 // Keep the main thread running
     while (1) {
         k_sleep(K_SECONDS(3));
-        // send_hearbeat_msg();
+        send_hearbeat_msg();
         
     }
 

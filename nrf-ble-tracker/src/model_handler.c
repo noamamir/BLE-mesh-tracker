@@ -469,6 +469,8 @@ void send_tag_message(const struct bt_le_scan_recv_info *device)
 // Add this unction to initiate time sync from the main node
 void send_time_sync(uint64_t *time)
 {
+	LOG_INF("Sending time sync message to all devices");
+	
     int err = bt_mesh_chat_cli_time_sync_send(&chat, time);
     if (err) {
         LOG_WRN("Failed to send time sync message: %d", err);

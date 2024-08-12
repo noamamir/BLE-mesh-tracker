@@ -1,0 +1,23 @@
+{
+    "version": 2,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 20
+    },
+    "configurePresets": [
+        {
+            "name": "build",
+            "displayName": "Build for nRF52 DK NRF52832",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "NCS_TOOLCHAIN_VERSION": "NONE",
+                "BOARD": "nrf52dk_nrf52832",
+                "CONFIG_DEBUG_OPTIMIZATIONS": "y",
+                "CONFIG_DEBUG_THREAD_INFO": "y",
+                "CACHED_CONF_FILE": "${sourceDir}/prj.conf;${sourceDir}/boards/nrf52dk_nrf52832.conf",
+                "DTC_OVERLAY_FILE": "${sourceDir}/devicetree.overlay"
+            }
+        }
+    ]
+}

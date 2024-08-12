@@ -55,7 +55,7 @@ extern "C" {
 				       BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID)
 
 /** opeartion code of send time sync */
-#define BT_MESH_CHAT_CLI_OP_TIME_SYNC BT_MESH_MODEL_OP_3(0x09, \
+#define BT_MESH_CHAT_CLI_OP_TIME_SYNC BT_MESH_MODEL_OP_3(0x0E, \
 				       BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID)
 
 

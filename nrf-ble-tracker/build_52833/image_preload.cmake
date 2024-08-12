@@ -1,0 +1,10 @@
+# Generated file that can be used to preload variant images
+set(BOARD "nrf52833dk_nrf52833" CACHE INTERNAL "NCS child image controlled")
+set(BOARD_ROOT "f:/projects/ble-mesh-tracker/nrf-ble-tracker;C:/ncs/v2.6.1/nrf;C:/ncs/v2.6.1/zephyr" CACHE INTERNAL "NCS child image controlled")
+set(CACHED_CONF_FILE "f:/projects/BLE-mesh-tracker/nrf-ble-tracker/prj.conf" CACHE INTERNAL "NCS child image controlled")
+set(CLI_CONFIG_DEBUG_OPTIMIZATIONS "y" CACHE INTERNAL "NCS child image controlled")
+set(CLI_CONFIG_DEBUG_THREAD_INFO "y" CACHE INTERNAL "NCS child image controlled")
+set(CONF_FILE_BUILD_TYPE "" CACHE INTERNAL "NCS child image controlled")
+set(DTC_OVERLAY_FILE "f:/projects/BLE-mesh-tracker/nrf-ble-tracker/devicetree.overlay" CACHE INTERNAL "NCS child image controlled")
+set(NCS_TOOLCHAIN_VERSION "NONE" CACHE INTERNAL "NCS child image controlled")
+set(WEST_PYTHON "C:/ncs/toolchains/cf2149caf2/opt/bin/python.exe" CACHE INTERNAL "NCS child image controlled")
