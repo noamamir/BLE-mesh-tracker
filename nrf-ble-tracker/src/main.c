@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2019 Nordic Semiconductor ASA
  *
@@ -131,13 +132,13 @@ int main(void)
 		LOG_WRN("Bluetooth init failed (err %d)\n", err);
 	}
 
-    err = uart_init();
-    if (err) {
-        LOG_WRN("UART init failed (err %d)\n", err);
-        return 0;
-    }
+    // err = uart_init();
+    // if (err) {
+    //     LOG_WRN("UART init failed (err %d)\n", err);
+    //     return 0;
+    // }
 
-    LOG_INF("Uart initialized\n");
+    // LOG_INF("Uart initialized\n");
 
 
     if (is_master_device()) {
@@ -166,7 +167,9 @@ static void scan_recv_cb(const struct bt_le_scan_recv_info *info, struct net_buf
         if (!is_master_device()) {
             LOG_INF("Device found: %s (RSSI %d)\n", addr, info->rssi);
         }
+
+        LOG_INF("Device found: %s (RSSI %d)\n", addr, info->rssi);
         send_tag_message(info);
+       
     }
 }
-

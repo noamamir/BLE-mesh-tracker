@@ -55,18 +55,18 @@ extern "C" {
 				       BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID)
 
 /** opeartion code of send time sync */
-#define BT_MESH_CHAT_CLI_OP_TIME_SYNC BT_MESH_MODEL_OP_3(0x0E, \
+#define BT_MESH_CHAT_CLI_OP_TIME_SYNC BT_MESH_MODEL_OP_3(0x11, \
 				       BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID)
 
 
-/** opeartion code of send time sync */
-#define BT_MESH_CHAT_CLI_OP_HEARTBEAT BT_MESH_MODEL_OP_3(0x08, \
+/** opeartion code of hearbeat  */
+#define BT_MESH_CHAT_CLI_OP_HEARTBEAT BT_MESH_MODEL_OP_3(0x10, \
 				       BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID)
 
 /* .. include_endpoint_chat_cli_rst_1 */
-#define BT_MESH_CHAT_CLI_MSG_LEN_HEART_BEAT 10
+#define BT_MESH_CHAT_CLI_MSG_LEN_HEART_BEAT 14
 #define BT_MESH_CHAT_CLI_MSG_LEN_TIME_SYNC 8
-#define BT_MESH_CHAT_CLI_MSG_LEN_SCAN_INFO 15
+#define BT_MESH_CHAT_CLI_MSG_LEN_SCAN_INFO 19
 #define BT_MESH_CHAT_CLI_MSG_MINLEN_MESSAGE 1
 #define BT_MESH_CHAT_CLI_MSG_MAXLEN_MESSAGE (\
 				     CONFIG_BT_MESH_CHAT_CLI_MESSAGE_LENGTH \
@@ -189,6 +189,8 @@ struct bt_mesh_chat_cli {
 	enum bt_mesh_chat_cli_presence presence;
 
 	uint64_t sync_time;
+
+	uint32_t msg_counter;
 
 	const struct device *counter_dev;
 };

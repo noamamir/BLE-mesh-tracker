@@ -457,7 +457,6 @@ const struct bt_mesh_comp *model_handler_init(void)
 
 void send_tag_message(const struct bt_le_scan_recv_info *device)
 {
-	
 	int err = bt_mesh_chat_cli_send_scan_info(&chat, device);
 
 	if (err) {
