@@ -64,9 +64,9 @@ extern "C" {
 				       BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID)
 
 /* .. include_endpoint_chat_cli_rst_1 */
-#define BT_MESH_CHAT_CLI_MSG_LEN_HEART_BEAT 14
+#define BT_MESH_CHAT_CLI_MSG_LEN_HEART_BEAT 10
 #define BT_MESH_CHAT_CLI_MSG_LEN_TIME_SYNC 8
-#define BT_MESH_CHAT_CLI_MSG_LEN_SCAN_INFO 19
+#define BT_MESH_CHAT_CLI_MSG_LEN_SCAN_INFO 9
 #define BT_MESH_CHAT_CLI_MSG_MINLEN_MESSAGE 1
 #define BT_MESH_CHAT_CLI_MSG_MAXLEN_MESSAGE (\
 				     CONFIG_BT_MESH_CHAT_CLI_MESSAGE_LENGTH \
@@ -93,13 +93,23 @@ struct bt_mesh_chat_cli;
  *
  * @param[in] _chat Pointer to a @ref bt_mesh_chat_cli instance.
  */
+#ifdef CONFIG_DEVICE_IS_MASTER
 #define BT_MESH_MODEL_CHAT_CLI(_chat)                                          \
-		BT_MESH_MODEL_VND_CB(BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID,       \
-			BT_MESH_CHAT_CLI_VENDOR_MODEL_ID,                      \
-			_bt_mesh_chat_cli_op, &(_chat)->pub,                   \
-			BT_MESH_MODEL_USER_DATA(struct bt_mesh_chat_cli,       \
-						_chat),                        \
-			&_bt_mesh_chat_cli_cb)
+        BT_MESH_MODEL_VND_CB(BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID,               \
+            BT_MESH_CHAT_CLI_VENDOR_MODEL_ID,                                  \
+            _bt_mesh_chat_cli_op, &(_chat)->pub,                        \
+            BT_MESH_MODEL_USER_DATA(struct bt_mesh_chat_cli,                   \
+                        _chat),                                                \
+            &_bt_mesh_chat_cli_cb)
+#else
+#define BT_MESH_MODEL_CHAT_CLI(_chat)                                          \
+        BT_MESH_MODEL_VND_CB(BT_MESH_CHAT_CLI_VENDOR_COMPANY_ID,               \
+            BT_MESH_CHAT_CLI_VENDOR_MODEL_ID,                                  \
+            _bt_mesh_chat_cli_op_slave, &(_chat)->pub,                         \
+            BT_MESH_MODEL_USER_DATA(struct bt_mesh_chat_cli,                   \
+                        _chat),                                                \
+            &_bt_mesh_chat_cli_cb)
+#endif
 /* .. include_endpoint_chat_cli_rst_2 */
 
 /** Bluetooth Mesh Chat Client model handlers. */
@@ -169,8 +179,8 @@ struct bt_mesh_chat_cli_handlers {
  */
 struct bt_mesh_heartbeat_msg
 {
-	const uint16_t device_id;
 	uint64_t time_sent;
+	uint16_t msg_counter;
 };
 
 struct bt_mesh_chat_cli {
@@ -190,9 +200,11 @@ struct bt_mesh_chat_cli {
 
 	uint64_t sync_time;
 
-	uint32_t msg_counter;
+	uint16_t msg_counter;
 
 	const struct device *counter_dev;
+
+	const struct device *uart_comm;
 };
 /* .. include_endpoint_chat_cli_rst_3 */
 
@@ -261,6 +273,7 @@ int bt_mesh_chat_cli_send_heartbeat(struct bt_mesh_chat_cli *chat);
 
 /** @cond INTERNAL_HIDDEN */
 extern const struct bt_mesh_model_op _bt_mesh_chat_cli_op[];
+extern const struct bt_mesh_model_op _bt_mesh_chat_cli_op_slave[];
 extern const struct bt_mesh_model_cb _bt_mesh_chat_cli_cb;
 /** @endcond */
 

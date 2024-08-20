@@ -6,9 +6,10 @@ from typing import Dict, Callable
 import numpy
 from matplotlib import pyplot as plt
 
-from models.advertising_packet import AdvertisingPacket
+from models.tag_message import TagMessage
 from models.beacon import Beacon
 from models.hallway import Hallway
+from models.heartbeat import Heartbeat
 from models.receivers import Receiver
 
 
@@ -19,33 +20,23 @@ class Boat:
     emit_tag_message_callback: Callable = None
     emit_heartbeat_callback: Callable = None
 
-    def set_tag_message_callback(self, callback: Callable[[dict], None]):
+    def set_tag_message_callback(self, callback: Callable[[TagMessage], None]):
         self.emit_tag_message_callback = callback
 
-    def set_heartbeat_message_callback(self, callback: Callable[[dict], None]):
+    def set_heartbeat_message_callback(self, callback: Callable[[Heartbeat], None]):
         self.emit_heartbeat_callback = callback
 
-    def handle_incoming_tag_messages(self, packet: AdvertisingPacket):
-        if packet.uuid in self.registered_receivers:
-            beacon = Beacon(packet.addr, packet.rssi)
-            self.registered_receivers[packet.uuid].set_beacon(beacon)
+    def handle_incoming_tag_messages(self, tag_msg: TagMessage):
+        if tag_msg.uuid in self.registered_receivers:
+            beacon = Beacon(tag_msg.addr, tag_msg.rssi)
+            self.registered_receivers[tag_msg.uuid].set_beacon(beacon)
         else:
-            self.register_receiver(packet.uuid)
-        tag_message = {
-            'uuid': packet.uuid,
-            'addr': packet.addr,
-            'rssi': packet.rssi
-        }
+            self.register_receiver(tag_msg.uuid)
 
-        self.emit_tag_message_callback(tag_message)
+        self.emit_tag_message_callback(tag_msg)
 
-    def handle_incoming_heartbeat(self, uuid, device_id, time_sent):
-        heartbeat_message = {
-            'uuid': uuid,
-            'device_id': device_id,
-            'time_sent': time_sent
-        }
-        emit_heartbeat_message(heartbeat_message)
+    def handle_incoming_heartbeat(self, heartbeat):
+        self.emit_heartbeat_callback(heartbeat)
 
     def register_receiver(self, receiver_name: str):
         self.registered_receivers[receiver_name] = Receiver(receiver_name)
@@ -66,9 +57,14 @@ class Boat:
         now = time.time()
         while True:
             for receiver in self.registered_receivers.values():
-                for [key, beacon] in receiver.beacons:
-                    if beacon.lastUpdated + 10 * 1000 > now:
-                        del receiver.beacons[key]
+                # Create a list of keys to remove
+                keys_to_remove = [
+                    key for key, beacon in receiver.beacons.items()
+                    if beacon.lastUpdated + 10 * 1000 <= now
+                ]
+                # Remove expired beacons
+                for key in keys_to_remove:
+                    del receiver.beacons[key]
 
             time.sleep(10)
 
@@ -95,3 +91,9 @@ class Boat:
                 beacon_dict[beacon.ID] = beacon
 
         return beacon_dict.keys()
+
+    def get_devices_as_dict(self) -> Dict[str, Dict]:
+        return {
+            uuid: receiver.to_dict()
+            for uuid, receiver in self.registered_receivers.items()
+        }

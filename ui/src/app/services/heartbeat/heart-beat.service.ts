@@ -1,13 +1,11 @@
 import {Injectable, NgZone} from '@angular/core';
 import {BehaviorSubject, flatMap, interval, last, map, merge, mergeAll, Observable, Subject, timeout} from "rxjs";
 import {ReceiverId} from "../../models/receiver";
-import {generateReceiverName, TagUpdatesService} from "../tagUpdates/tag-updates.service";
+import {TagUpdatesService} from "../tagUpdates/tag-updates.service";
+import {HeartBeat} from "../../models/heartBeat";
+import {TagMessage} from "../../models/TagMessage";
+import {SocketIoService} from "../socket-io.service";
 
-
-export interface HeartBeat {
-  receiver: ReceiverId,
-  serial: number
-}
 
 export type MessageCount = { should: number, got: number, last: number }
 
@@ -23,36 +21,40 @@ export class HeartBeatService {
 
   constructor(
     private ngZone: NgZone,
-    private tagUpdates: TagUpdatesService
+    private tagUpdates: TagUpdatesService,
+    private socketIo: SocketIoService
   ) {
-    this.ngZone.runOutsideAngular(() => {
-      interval(3 * 1000).pipe(
-        flatMap(() => Array.from({length: 3}, _ => this.generateHeartBeat()))
-      )
-        .subscribe(this.heartBeats)
-    })
+    setInterval(() => {
+      console.log(`Active receives are ${this.activeReceivers.value.values()}`)
+    }, 3000)
+
+    this.socketIo.SubscribeToEvent<HeartBeat>('heartbeat_message', ((data: HeartBeat) => this.heartBeats.next(data)));
 
     this.heartBeats.subscribe(hb => {
-      this.hbCountDown(hb.receiver)
-      const s = this.activeReceivers.value.add(hb.receiver)
-      console.log(s.values())
-      this.ngZone.run(() => this.activeReceivers.next(s))
+      this.hbCountDown(hb.uuid)
+      const newActive = new Set(this.activeReceivers.value);
+      newActive.add(hb.uuid);
+      console.log('Active receivers:', Array.from(newActive));
+      this.activeReceivers.next(newActive);
 
     })
 
-    const allUpdates: Observable<HeartBeat> = merge(
+    const allUpdates: Observable<HeartBeat | TagMessage> = merge(
       this.heartBeats,
-      this.tagUpdates.updates.pipe(
-        flatMap(updates => updates),
-      )
-    )
+      this.tagUpdates.updates)
 
-    allUpdates.subscribe(({receiver, serial}) => {
-      const curr = this.messageCounter.value.get(receiver) ?? {got: 0, should: 1, last: serial}
-      curr.should += serial - curr.last
-      curr.last = serial
+    allUpdates.subscribe(({uuid, msg_counter}) => {
+      let curr = this.messageCounter.value.get(uuid) ?? {got: 0, should: 1, last: msg_counter}
+      if (curr.last > msg_counter) {
+        this.messageCounter.next(new Map())
+        curr = {got: 0, should: 1, last: msg_counter}
+      }
+
+
+      curr.should += msg_counter - curr.last
+      curr.last = msg_counter
       curr.got++
-      this.messageCounter.next(this.messageCounter.value.set(receiver, curr))
+      this.messageCounter.next(this.messageCounter.value.set(uuid, curr))
     })
   }
 
@@ -66,7 +68,7 @@ export class HeartBeatService {
       const newTimeout = setTimeout(() => {
         console.log('lost', receiver)
         this.timeoutMap.delete(receiver)
-        const active = this.activeReceivers.value
+        const active = new Set(this.activeReceivers.value);
         active.delete(receiver)
         this.ngZone.run(() => {
           this.activeReceivers.next(active)
@@ -74,15 +76,6 @@ export class HeartBeatService {
       }, 1e4) as number
       this.timeoutMap.set(receiver, newTimeout)
     })
-
-  }
-
-  generateHeartBeat(): HeartBeat {
-    const uuid = generateReceiverName()
-    const serial = getSerial(uuid)
-    return {
-      receiver: uuid, serial
-    }
   }
 
   clear() {

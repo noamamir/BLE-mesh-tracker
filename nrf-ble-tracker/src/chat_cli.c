@@ -24,14 +24,13 @@ LOG_MODULE_DECLARE(chat);
 
 // static const struct device *uart_dev;
 
-
-static void pass_tag_msg_to_pc(const char *uuid, const bt_addr_t *addr, int8_t rssi, uint64_t time_sent, uint32_t msg_counter);
-static void pass_heartbeat_msg_to_pc(const char *uuid ,const uint16_t device_id, const uint64_t time_sent, uint32_t msg_counter);
-
+static int uart_send_data(const struct bt_mesh_chat_cli *chat, const char *data, size_t len);
+static void pass_tag_msg_to_pc(const struct bt_mesh_chat_cli *chat, const char *uuid, const bt_addr_t *addr, int8_t rssi, uint64_t time_sent, uint32_t msg_counter);
+static void pass_heartbeat_msg_to_pc(const struct bt_mesh_chat_cli *chat, const char *uuid, const uint64_t time_sent, uint32_t msg_counter);
+static char* get_uuid_from_addr(const struct bt_mesh_msg_ctx *ctx, char *uuid_str);
 bool is_master_device(void);
 static void uart_send_string(const char *str);
 static void init_counter(struct bt_mesh_chat_cli *chat);
-uint64_t get_current_time(const struct device *counter_dev);
 uint64_t get_current_time2(struct bt_mesh_chat_cli *chat);
 
 BUILD_ASSERT(BT_MESH_MODEL_BUF_LEN(BT_MESH_CHAT_CLI_OP_MESSAGE,
@@ -65,10 +64,10 @@ bool is_master_device(void)
 #endif
 }
 
-static void pass_tag_msg_to_pc(const char *uuid, const bt_addr_t *addr, int8_t rssi, uint64_t time_sent, uint32_t msg_counter)
+static void pass_tag_msg_to_pc(const struct bt_mesh_chat_cli *chat, const char *uuid, const bt_addr_t *addr, int8_t rssi, uint64_t time_sent, uint32_t msg_counter)
 {
     char json_buffer[100];  // Increased buffer size to accommodate the new field
-    snprintf(json_buffer, sizeof(json_buffer),
+    int len = snprintf(json_buffer, sizeof(json_buffer),
              "{\"uuid\":\"%s\",\"addr\":\"%02x:%02x:%02x:%02x:%02x:%02x\",\"rssi\":%d,\"time_sent\":%" PRIu64 ",\"msg_counter\":%u}\n",
              uuid,
              addr->val[5], addr->val[4], addr->val[3],
@@ -77,27 +76,29 @@ static void pass_tag_msg_to_pc(const char *uuid, const bt_addr_t *addr, int8_t r
              time_sent,
              msg_counter);
 
-    printk("TAG: %s", json_buffer);
+	k_sleep(K_MSEC(50));
+	printk("\n");
+	printk("TAG: %s", json_buffer);
+    uart_send_data(chat, json_buffer, len);
 }
 
 // Function to pass hearbeat msg to a computer service
-static void pass_heartbeat_msg_to_pc(const char *uuid ,const uint16_t device_id, const uint64_t time_sent, uint32_t msg_counter)
+static void pass_heartbeat_msg_to_pc(const struct bt_mesh_chat_cli *chat, const char *uuid , const uint64_t time_sent, uint32_t msg_counter)
 {
     // Implement the logic to pass the data to your computer service
     // This could involve sending data over UART, USB, or another interface
 
 	char json_buffer[100];
-	snprintf(json_buffer, sizeof(json_buffer), 
-             "{\"uuid\":\"%s\",\"device_id\":%u,\"time_sent\":%" PRIu64 ", \"msg_counter\":%u}\n",
+	int len = snprintf(json_buffer, sizeof(json_buffer), 
+             "{\"uuid\":\"%s\", \"time_sent\":%" PRIu64 ", \"msg_counter\":%u}\n",
              uuid,
-             device_id,
              time_sent,
 			 msg_counter);
     
-    
+	k_sleep(K_MSEC(50));
+	printk("\n");
 	printk("HEARTBEAT: %s", json_buffer);
-
-
+	uart_send_data(chat, json_buffer, len);
 }
 
 
@@ -123,11 +124,10 @@ static int handle_message(const struct bt_mesh_model *model, struct bt_mesh_msg_
 int handle_scan_info(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
                      struct net_buf_simple *buf)
 {
+	struct bt_mesh_chat_cli *chat = model->rt->user_data;
     bt_addr_t addr;
     int8_t rssi;
-    char uuid_str[UUID_STR_LEN];
-    uint64_t time_sent;
-	uint32_t msg_counter;
+	uint16_t msg_counter;
 
     // Extract address from the message
     memcpy(&addr, net_buf_simple_pull_mem(buf, BT_ADDR_SIZE), BT_ADDR_SIZE);
@@ -135,49 +135,48 @@ int handle_scan_info(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *
     // Extract RSSI from the message
     rssi = net_buf_simple_pull_u8(buf);
 
-    // Extract time sent from the message
-    time_sent = net_buf_simple_pull_le64(buf);
-
-	msg_counter = net_buf_simple_pull_le32(buf);
+	msg_counter = net_buf_simple_pull_le16(buf);
 
     // Convert address to string for logging
     char addr_str[BT_ADDR_STR_LEN];
     bt_addr_to_str(&addr, addr_str, sizeof(addr_str));
 
-    // Convert the source address (UUID) to string
+	// get uuid from message ctx
+	char uuid_str[UUID_STR_LEN];
+	 // Convert the source address (UUID) to string
     snprintf(uuid_str, sizeof(uuid_str), "%04x", ctx->addr);
 
-    // Check if this device is the master device
-    if (is_master_device()) {
-        pass_tag_msg_to_pc(uuid_str, &addr, rssi, time_sent, msg_counter);
-    }
-
+	pass_tag_msg_to_pc(chat ,uuid_str, &addr, rssi, 0, msg_counter);
     return 0;
+}
+
+static char* get_uuid_from_addr(const struct bt_mesh_msg_ctx *ctx, char *uuid_str)
+{
+    // Convert the 16-bit address to a hex string
+    snprintf(uuid_str, sizeof(uuid_str), "%04X", ctx->addr);
 }
 
 static int handle_heartbeat(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
                      struct net_buf_simple *buf)
 {
-	uint16_t device_id;
-	uint32_t msg_counter;
-	uint64_t time_sent;
+	struct bt_mesh_chat_cli *chat = model->rt->user_data;
 	char uuid_str[UUID_STR_LEN];
 
-  // Extract time_sent from the message (8 bytes)
-    time_sent = net_buf_simple_pull_le64(buf);
+ 	if (buf->len != sizeof(struct bt_mesh_heartbeat_msg)) {
+        printk("Invalid heartbeat message size\n");
+        return 0;
+    }
 
-    // Extract device_id from the message (2 bytes)
-    device_id = net_buf_simple_pull_le16(buf);
+    struct bt_mesh_heartbeat_msg heartbeat;
 
-	msg_counter = net_buf_simple_pull_le32(buf);
+    // Copy the entire buffer into the heartbeat struct
+    memcpy(&heartbeat, buf->data, sizeof(struct bt_mesh_heartbeat_msg));
 	
     // Convert the source address (UUID) to string
     snprintf(uuid_str, sizeof(uuid_str), "%04x", ctx->addr);
 
 	// Check if this device is the master device
-    if (is_master_device()) {
-       	pass_heartbeat_msg_to_pc(uuid_str, device_id, time_sent, msg_counter);
-    }
+	pass_heartbeat_msg_to_pc(chat, uuid_str, heartbeat.time_sent, heartbeat.msg_counter);
 
 	return 0;
 }
@@ -199,6 +198,20 @@ static int handle_time_sync(const struct bt_mesh_model *model, struct bt_mesh_ms
     return 0;
 }
 
+static int uart_send_data(const struct bt_mesh_chat_cli *chat, const char *data, size_t len)
+{
+    if (!device_is_ready(chat->uart_comm)) {
+        printk("UART device not ready\n");
+        return -ENODEV;
+    }
+
+    for (size_t i = 0; i < len; i++) {
+        uart_poll_out(chat->uart_comm, data[i]);
+    }
+
+    return 0;
+}
+
 static void init_counter(struct bt_mesh_chat_cli *chat) {
 	chat->counter_dev = DEVICE_DT_GET(TIMER);
     if (!device_is_ready(chat->counter_dev)) {
@@ -212,6 +225,24 @@ static void init_counter(struct bt_mesh_chat_cli *chat) {
         return;
     }
 }
+
+/* .. include_startingpoint_chat_cli_rst_2 */
+const struct bt_mesh_model_op _bt_mesh_chat_cli_op_slave[] = {
+	
+	{
+		BT_MESH_CHAT_CLI_OP_MESSAGE,
+		BT_MESH_LEN_MIN(BT_MESH_CHAT_CLI_MSG_MINLEN_MESSAGE),
+		handle_message
+	},
+	{
+		BT_MESH_CHAT_CLI_OP_TIME_SYNC,
+		BT_MESH_LEN_EXACT(BT_MESH_CHAT_CLI_MSG_LEN_TIME_SYNC),
+		handle_time_sync
+	},
+	
+
+	BT_MESH_MODEL_OP_END,
+};
 
 /* .. include_startingpoint_chat_cli_rst_2 */
 const struct bt_mesh_model_op _bt_mesh_chat_cli_op[] = {
@@ -389,27 +420,67 @@ int bt_mesh_chat_cli_message_send(struct bt_mesh_chat_cli *chat,
 int bt_mesh_chat_cli_send_scan_info(struct bt_mesh_chat_cli *chat,
                                     const struct bt_le_scan_recv_info *info)
 {
-    struct net_buf_simple *buf = chat->model->pub->msg;
-    bt_mesh_model_msg_init(buf, BT_MESH_CHAT_CLI_OP_SCAN_INFO);
+	if (is_master_device()) {
+		// get uuid from message ctx
+		char uuid_str[UUID_STR_LEN];
+		snprintf(uuid_str, UUID_STR_LEN, "%04X", bt_mesh_primary_addr());
+		pass_tag_msg_to_pc(chat, uuid_str, &info->addr->a, info->rssi, 0, chat->msg_counter);
+		chat->msg_counter++;
+
+		return 0;
+    } else {
+		struct net_buf_simple *buf = chat->model->pub->msg;
+		bt_mesh_model_msg_init(buf, BT_MESH_CHAT_CLI_OP_SCAN_INFO);
 
 
-    uint64_t now_ms = get_current_time2(chat);
+		uint64_t now_ms = get_current_time2(chat);
 
-    // Add address
-    net_buf_simple_add_mem(buf, &info->addr->a, BT_ADDR_SIZE);
+		// Add address
+		net_buf_simple_add_mem(buf, &info->addr->a, BT_ADDR_SIZE);
 
-    // Add RSSI
-    net_buf_simple_add_u8(buf, info->rssi);
+		// Add RSSI
+		net_buf_simple_add_u8(buf, info->rssi);
 
-    // Add time sent
-    net_buf_simple_add_le64(buf, now_ms);
+		// Add time sent
+		// net_buf_simple_add_le64(buf, now_ms);
 
-	net_buf_simple_add_le32(buf, chat->msg_counter);
+		net_buf_simple_add_le16(buf, chat->msg_counter);
 
-	chat->msg_counter++;
+		chat->msg_counter++;
 
-    return bt_mesh_model_publish(chat->model);
+		return bt_mesh_model_publish(chat->model);
+	}
 }
+
+int bt_mesh_chat_cli_send_heartbeat(struct bt_mesh_chat_cli *chat)
+{
+	struct bt_mesh_heartbeat_msg heartbeat = {
+	.time_sent = get_current_time2(chat),
+	.msg_counter = chat->msg_counter
+	};
+
+	if (is_master_device()) {
+		// get uuid from message ctx
+		char uuid_str[UUID_STR_LEN];
+		snprintf(uuid_str, UUID_STR_LEN, "%04X", bt_mesh_primary_addr());
+		pass_heartbeat_msg_to_pc(chat ,uuid_str, heartbeat.time_sent, heartbeat.msg_counter);
+		chat->msg_counter++;
+
+		return 0;
+    } else {
+		struct net_buf_simple *buf = chat->model->pub->msg;
+		bt_mesh_model_msg_init(buf, BT_MESH_CHAT_CLI_OP_HEARTBEAT);
+		
+		// Add the entire heartbeat structure to the buffer
+		net_buf_simple_add_mem(buf, &heartbeat, sizeof(struct bt_mesh_heartbeat_msg));
+
+		// Increment the message counter
+		chat->msg_counter++;
+
+		return bt_mesh_model_publish(chat->model);
+	}
+}
+
 
 int bt_mesh_chat_cli_time_sync_send(struct bt_mesh_chat_cli *chat, uint64_t *time)
 {
@@ -421,29 +492,6 @@ int bt_mesh_chat_cli_time_sync_send(struct bt_mesh_chat_cli *chat, uint64_t *tim
     return bt_mesh_model_publish(chat->model);
 }
 
-int bt_mesh_chat_cli_send_heartbeat(struct bt_mesh_chat_cli *chat)
-{
-	struct bt_mesh_heartbeat_msg heartbeat = {
-	.device_id = chat -> model->id,
-	.time_sent = get_current_time2(chat)
-	};
-
-    struct net_buf_simple *buf = chat->model->pub->msg;
-    bt_mesh_model_msg_init(buf, BT_MESH_CHAT_CLI_OP_HEARTBEAT);
-    
-    // Add time sent
-    net_buf_simple_add_le64(buf, heartbeat.time_sent);
-
-
-    // Add device id
-    net_buf_simple_add_le16(buf, heartbeat.device_id);
-	
-	net_buf_simple_add_le32(buf, chat->msg_counter);
-
-	chat->msg_counter++;
-
-    return bt_mesh_model_publish(chat->model);
-}
 
 
 /* .. include_startingpoint_chat_cli_rst_9 */
@@ -470,25 +518,7 @@ int bt_mesh_chat_cli_private_message_send(struct bt_mesh_chat_cli *chat,
 	return bt_mesh_model_send(chat->model, &ctx, &buf, NULL, NULL);
 }
 /* .. include_endpoint_chat_cli_rst_9 */
-// Update the get_current_time function
-uint64_t get_current_time(const struct device *counter_dev)  // Changed return type to uint64_t
-{
-    int err;
-    uint32_t now_ticks;
-    uint64_t now_us;
-    uint64_t now_ms;  
 
-    err = counter_get_value(counter_dev, &now_ticks);
-    if (err) {
-        LOG_ERR("Failed to read counter value (err %d)", err);
-        return 0;
-    }
-
-    now_us = counter_ticks_to_us(counter_dev, now_ticks);
-    now_ms = now_us / 1000;
-
-    return now_ms;
-}
 
 uint64_t get_current_time2(struct bt_mesh_chat_cli *chat)  // Changed return type to uint64_t
 {

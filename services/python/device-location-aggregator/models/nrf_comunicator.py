@@ -2,72 +2,132 @@ import json
 import logging
 import os
 import time
-
 import serial
-
+import csv
 from models.Boat import Boat
-from models.advertising_packet import AdvertisingPacket
+from models.tag_message import TagMessage
+from models.heartbeat import Heartbeat
 
 
 class NRFUARTCommunicator:
-    def __init__(self, port, boat: Boat, baudrate=460800, timeout=1):
+    def __init__(self, port, boat: Boat, baudrate=460800, timeout=3, max_attempts=5):
         self.boat = boat
-        self.ser = serial.Serial(port, baudrate, timeout=timeout)
-        time.sleep(2)  # Allow some time for the connection to establish
+        self.port = port
+        self.baudrate = baudrate
+        self.timeout = timeout
+        self.max_attempts = max_attempts
+        self.ser = None
+        self.logger = self.setup_logger()
+        self.csv_filename = 'received_messages.csv'
+        self.csv_file = None
+        self.csv_writer = None
+
+
+    def setup_logger(self):
+        logger = logging.getLogger('NRFUARTCommunicator')
+        logger.setLevel(logging.DEBUG)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        return logger
+
+    def connect(self):
+
+        self.logger.info(f"Trying to connect to nrf device at {self.port}")
+        for attempt in range(self.max_attempts):
+            try:
+                self.ser = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
+                time.sleep(2)  # Allow some time for the connection to establish
+                self.logger.info(f"Successfully connected to {self.port}")
+                return
+            except serial.SerialException as e:
+                self.logger.error(
+                    f"Attempt {attempt + 1}/{self.max_attempts}: Failed to connect to {self.port}. Error: {str(e)}")
+                if attempt < self.max_attempts - 1:
+                    self.logger.info(f"Retrying in 5 seconds...")
+                    time.sleep(5)
+                else:
+                    self.logger.error("Max attempts reached. Unable to establish connection.")
+                    raise
 
     def read_from_uart_loop(self):
-        while True:
-            try:
-                line = self.read_response()  # Read a line from the serial port
+        with open(self.csv_filename, 'a', newline='') as self.csv_file:
+            self.csv_writer = csv.writer(self.csv_file)
 
-                if line.find("TAG:") != -1:
-                    json_line = line.split("TAG:")[1]  # Parse the JSON data for TAG message
-                    data = json.loads(json_line)
+            while True:
+                try:
+                    line = self.read_response()  # Read a line from the serial port
 
-                    adv_packet = AdvertisingPacket(data['uuid'], data['rssi'], data['addr'])
-                    self.boat.handle_incoming_tag_messages(adv_packet)
+                    if line.find("TAG:") != -1:
+                        json_line = line.split("TAG:")[1]  # Parse the JSON data for TAG message
+                        data = json.loads(json_line)
 
-                elif line.find("HEARTBEAT:") != -1:
-                    json_line = line.split("HEARTBEAT:")[1]  # Parse the JSON data for HEARTBEAT message
-                    data = json.loads(json_line)
+                        self.logger.info(f"msg - {data['msg_counter']}")
+                        tag_msg = TagMessage(data['uuid'], data['rssi'], data['addr'], data['time_sent'], data['msg_counter'])
+                        self.boat.handle_incoming_tag_messages(tag_msg)
 
-                    # Process the HEARTBEAT data
-                    uuid = data['uuid']
-                    device_id = data['device_id']
-                    time_sent = data['time_sent']
+                        # Write the received tag message to the CSV file
+                        self.csv_writer.writerow([time.strftime('%Y-%m-%d %H:%M:%S'), 'TAG', data['uuid'], data['rssi'], data['addr'], data['time_sent'], data['msg_counter']])
+                        self.csv_file.flush()
+                    elif line.find("HEARTBEAT:") != -1:
+                        json_line = line.split("HEARTBEAT:")[1]  # Parse the JSON data for HEARTBEAT message
+                        data = json.loads(json_line)
 
-                    # Call the appropriate function to handle the HEARTBEAT message
-                    self.boat.handle_incoming_heartbeat(uuid, device_id, time_sent)
+                        self.logger.info(f"msg - {data['msg_counter']}")
+                        heartbeat = Heartbeat(data['uuid'], data['time_sent'], data['msg_counter'])
+                        self.boat.handle_incoming_heartbeat(heartbeat)
 
-                os.system('cls')
-                self.boat.print_receiver_state()
+                        self.csv_writer.writerow([time.strftime('%Y-%m-%d %H:%M:%S'), 'HEARTBEAT', data['uuid'], '', '', data['time_sent'], data['msg_counter']])
+                        self.csv_file.flush()
+                    time.sleep(0.1)
+                except json.JSONDecodeError:
+                    self.logger.warning("Received invalid JSON data")
+                except serial.SerialException as e:
+                    self.logger.error(f"Serial port error: {str(e)}")
+                except KeyError as e:
+                    self.logger.error(f"Invalid data format: {str(e)}")
+                except Exception as e:
+                    self.logger.error(f"Unexpected error: {str(e)}")
 
-            except json.JSONDecodeError:
-                pass  # print("Received invalid JSON data")
-            except serial.SerialException:
-                print("Serial port error")
-                break
-            except KeyError:
-                print("Invalid data format")
+    def reconnect(self):
+        self.logger.info("Attempting to reconnect...")
+        self.close()
+        try:
+            self.connect()
+        except serial.SerialException as e:
+            self.logger.error(f"Failed to reconnect: {str(e)}")
 
     def send_current_time(self):
-        # Get the current time in milliseconds
         current_time_ms = int(time.time() * 1000)
-
-        # Send the current time in milliseconds
         self.send_command(current_time_ms)
 
     def send_command(self, command):
-        self.ser.write(f"{command}\n".encode())
-        time.sleep(0.1)  # Small delay to ensure command is sent
+        try:
+            self.ser.write(f"{command}\n".encode())
+            time.sleep(0.1)  # Small delay to ensure command is sent
+        except serial.SerialException as e:
+            self.logger.error(f"Error sending command: {str(e)}")
 
     def read_response(self):
-        return self.ser.readline().decode('utf-8').strip()
+        try:
+            return self.ser.readline().decode('utf-8').strip()
+        except serial.SerialException as e:
+            self.logger.error(f"Error reading response: {str(e)}")
+            return ""
 
     def sync_time(self):
         current_time = int(time.time() * 1000)  # Current time in milliseconds
         self.send_command(f"SYNC_TIME:{current_time}")
-        print(f"sent sync_time: {current_time}")
+        self.logger.info(f"Sent sync_time: {current_time}")
 
     def close(self):
-        self.ser.close()
+        if self.ser and self.ser.is_open:
+            self.ser.close()
+            self.logger.info(f"Closed connection to {self.port}")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()

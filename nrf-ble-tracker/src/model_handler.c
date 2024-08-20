@@ -13,6 +13,8 @@
 #include <zephyr/shell/shell.h>
 #include <zephyr/shell/shell_uart.h>
 #include <zephyr/device.h>
+#include <zephyr/drivers/uart.h>
+#include <zephyr/kernel.h>
 
 #include "chat_cli.h"
 #include "model_handler.h"
@@ -20,11 +22,9 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(chat);
 
-
+#define UART_BUF_SIZE 256
 static const struct shell *chat_shell;
-// static const struct device *rtc_dev;
-// static uint64_t *rtc_start_time;
-
+#define UART_DEVICE_NODE DT_NODELABEL(uart1)
 
 /******************************************************************************/
 /*************************** Health server setup ******************************/
@@ -34,6 +34,7 @@ static const struct shell *chat_shell;
  */
 static struct k_work_delayable attention_blink_work;
 static bool attention;
+static int uart_init(void);
 
 static void attention_blink(struct k_work *work)
 {
@@ -245,7 +246,8 @@ static const struct bt_mesh_chat_cli_handlers chat_handlers = {
 /* .. include_startingpoint_model_handler_rst_1 */
 static struct bt_mesh_chat_cli chat = {
 	.handlers = &chat_handlers,
-	.sync_time = 0
+	.sync_time = 0,
+	.uart_comm = DEVICE_DT_GET(UART_DEVICE_NODE)
 };
 
 static struct bt_mesh_elem elements[] = {
@@ -451,8 +453,60 @@ const struct bt_mesh_comp *model_handler_init(void)
 
 	chat_shell = shell_backend_uart_get_ptr();
 	shell_print(chat_shell, ">>> Bluetooth Mesh Chat sample <<<");
+	uart_init();
+	LOG_INF("Uart initialized\n");
 
 	return &comp;
+}
+
+
+static void uart_cb(const struct device *dev, void *user_data)
+{
+    uint8_t c;
+
+    if (!uart_irq_update(dev)) {
+        return;
+    }
+
+    static uint8_t rx_buf[UART_BUF_SIZE];
+    static int rx_buf_pos;
+
+    while (uart_irq_rx_ready(dev)) {
+        uart_fifo_read(dev, &c, 1);
+
+        if ((c == '\n' || c == '\r') && rx_buf_pos > 0) {
+            // Null terminate the string
+            rx_buf[rx_buf_pos] = '\0';
+            
+            // Process the command
+            if (strncmp((char *)rx_buf, "SYNC_TIME:", 10) == 0) {
+                uint64_t time = strtoull((char *)rx_buf + 10, NULL, 10);
+                send_time_sync(&time);
+                
+                // Send acknowledgement
+                char ack[] = "Time sync received\n";
+                uart_fifo_fill(dev, ack, strlen(ack));
+            }
+            
+            // Reset buffer
+            rx_buf_pos = 0;
+        } else if (rx_buf_pos < sizeof(rx_buf) - 1) {
+            rx_buf[rx_buf_pos++] = c;
+        }
+    }
+}
+
+static int uart_init(void)
+{
+    if (!device_is_ready(chat.uart_comm)) {
+        printk("UART device not found!\n");
+        return -ENODEV;
+    }
+    k_sleep(K_SECONDS(1));
+    uart_irq_callback_user_data_set(chat.uart_comm, uart_cb, NULL);
+    uart_irq_rx_enable(chat.uart_comm);
+
+    return 0;
 }
 
 void send_tag_message(const struct bt_le_scan_recv_info *device)
@@ -478,9 +532,9 @@ void send_time_sync(uint64_t *time)
 
 void send_hearbeat_msg()
 {
+	LOG_INF("Sending heartbeat message ");
 
 	int err = bt_mesh_chat_cli_send_heartbeat(&chat);
-
     if (err) {
         LOG_WRN("Failed to send time sync message: %d", err);
     }

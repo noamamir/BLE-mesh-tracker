@@ -1,10 +1,13 @@
 import {Injectable, NgZone} from '@angular/core';
 import {Receiver, ReceiverId} from "../../models/receiver";
-import {BeaconId} from "../../models/beacon";
-import {TagUpdate} from "../../models/TagUpdate";
+import {Beacon, BeaconId} from "../../models/beacon";
+import {TagMessage} from "../../models/TagMessage";
 import {TagUpdatesService} from "../tagUpdates/tag-updates.service";
-import {BehaviorSubject, distinctUntilChanged, flatMap, map} from "rxjs";
+import {BehaviorSubject, distinctUntilChanged, flatMap, map, Observable} from "rxjs";
 import {HeartBeatService} from "../heartbeat/heart-beat.service";
+import {HttpClient} from "@angular/common/http";
+import {SocketIoService} from "../socket-io.service";
+import {HeartBeat} from "../../models/heartBeat";
 
 
 export type State = Record<ReceiverId, Receiver>
@@ -14,18 +17,23 @@ export type State = Record<ReceiverId, Receiver>
   providedIn: 'root'
 })
 export class GridStateService {
-  state = new BehaviorSubject<State>({})
-  lastUpdate = new Map<ReceiverId, number>()
-  likelyIn = new BehaviorSubject<Record<BeaconId, Receiver>>({})
-  beacons = new BehaviorSubject<BeaconId[]>([])
-  receivers = new BehaviorSubject<ReceiverId[]>([])
 
+  private receiversSubject = new BehaviorSubject<Record<ReceiverId, Receiver>>({});
+  receivers$ = this.receiversSubject.asObservable();
+
+  private apiUrl = 'http://localhost:5000'; // Update with your server URL
 
   constructor(
+    private http: HttpClient,
+    private socketService: SocketIoService,
     private tagUpdates: TagUpdatesService,
     private zone: NgZone,
-    private heartBeatService: HeartBeatService
+    private heartBeatService: HeartBeatService,
+    private socketio: SocketIoService,
   ) {
+    this.initializeReceivers();
+    this.listenForUpdates();
+
     this.state.pipe(
       map(x => Object.keys(x)),
       distinctUntilChanged(),
@@ -42,32 +50,69 @@ export class GridStateService {
     })
 
     this.state.pipe(map(this.toLikelyInMap.bind(this))).subscribe(this.likelyIn)
-
-    this.tagUpdates.updates.subscribe(this.handleTagUpdate.bind(this))
   }
 
-  handleTagUpdate(updates: TagUpdate[]) {
-    let state = this.state.value
+  private initializeReceivers(): void {
+    this.http.get<Record<ReceiverId, Receiver>>(`${this.apiUrl}/devices`).subscribe(
+      (receivers) => {
 
-    for (const tag of updates) {
-      this.lastUpdate.set(tag.receiver, Date.now())
+        this.receiversSubject.next(receivers);
+      },
+      (error) => console.error('Error fetching receivers:', error)
+    );
+  }
 
-      let receiver = state[tag.receiver] ?? {
-        beacons: {}, uuid: tag.receiver
-      }
+  private listenForUpdates(): void {
+    this.tagUpdates.updates.subscribe((update) => this.handleTagUpdate(update))
+    this.heartBeatService.heartBeats.subscribe((heartbeat) => this.updateReceiverWithHeartbeat(heartbeat) )
+  }
 
-      receiver.beacons[tag.beacon.ID] = tag.beacon
+  private updateReceiverWithTagMessage(message: TagMessage): void {
+    this.handleTagUpdate(message)
+  }
 
-      const entry: Record<ReceiverId, Receiver> = {}
-      entry[tag.receiver] = receiver
+
+  private updateReceiverWithHeartbeat(heartbeat: HeartBeat): void {
+    // Implement heartbeat update logic if needed
+    console.log('Received heartbeat:', heartbeat);
+  }
+
+  getReceiverById(id: ReceiverId): Observable<Receiver | undefined> {
+    return this.receivers$.pipe(
+      map(receivers => receivers[id])
+    );
+  }
+
+  syncTime(): Observable<boolean> {
+    return this.http.post<boolean>(`${this.apiUrl}/syncTime`, {});
+  }
+
+  state = new BehaviorSubject<State>({})
+  lastUpdate = new Map<ReceiverId, number>()
+  likelyIn = new BehaviorSubject<Record<BeaconId, Receiver>>({})
+  beacons = new BehaviorSubject<BeaconId[]>([])
+  receivers = new BehaviorSubject<ReceiverId[]>([])
 
 
-      state = {...state, ...entry}
-    }
+  getReceivers() {
+    // this.http.get()
+  }
 
+  handleTagUpdate(tag: TagMessage) {
+    let state = this.state.value;
+
+    let receiver = state[tag.uuid] ?? {id: tag.uuid, beacons: {}}
+
+    const time = Date.now()
+    receiver.beacons[tag.addr] = new Beacon(tag.addr, tag.rssi, time);
+
+    const entry: Record<ReceiverId, Receiver> = {}
+    entry[tag.uuid] = receiver
+
+    state = {...state, ...entry}
 
     this.zone.run(() => {
-      this.state.next(state)
+      this.state.next(state);
     })
   }
 
@@ -79,7 +124,7 @@ export class GridStateService {
   }
 
   beaconReceiverPairs(rec: Receiver): [BeaconId, ReceiverId][] {
-    return Object.keys(rec.beacons).map(beacon => [beacon, rec.uuid])
+    return Object.keys(rec.beacons).map(beacon => [beacon, rec.id])
   }
 
 
@@ -92,15 +137,16 @@ export class GridStateService {
         const curr = result[beacon.ID];
         if (!curr) {
           result[beacon.ID] = receiver
-        } else if (curr.beacons[beacon.ID]?.rssi ?? 1e200 >
-          beacon.rssi) {
+        } else if (curr.beacons[beacon.ID].rssi < beacon.rssi) {
           result[beacon.ID] = receiver
         }
       }
     }
     return result
   }
+
 }
+
 
 function groupBy<T, V>(arr: T[], key: (item: T) => string | number, value: (item: T) => V) {
   const result: Record<string | number, V[]> = {}

@@ -1,0 +1,21 @@
+"C:\Program Files\JetBrains\CLion 2024.1.5\bin\cmake\win\x64\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_MAKE_PROGRAM=C:/Program Files/JetBrains/CLion 2024.1.5/bin/ninja/win/x64/ninja.exe" -G Ninja -S C:\projects\BLE-mesh-tracker\nrf-ble-tracker -B C:\projects\BLE-mesh-tracker\nrf-ble-tracker\cmake-build-debug
+Loading Zephyr default modules (Zephyr base).
+-- Application: C:/projects/BLE-mesh-tracker/nrf-ble-tracker
+-- CMake version: 3.28.6
+-- Using NCS Toolchain 2.6.20240304.889616714482 for building. (C:/ncs/toolchains/cf2149caf2/cmake)
+-- Found Python3: C:/ncs/toolchains/cf2149caf2/opt/bin/python.exe (found suitable version "3.9.13", minimum required is "3.8") found components: Interpreter 
+-- Cache files will be written to: C:/ncs/v2.6.1/zephyr/.cache
+-- Zephyr version: 3.5.99 (C:/ncs/v2.6.1/zephyr)
+-- Found west (found suitable version "1.2.0", minimum required is "0.14.0")
+CMake Error at C:/ncs/v2.6.1/zephyr/cmake/modules/extensions.cmake:2891 (message):
+  BOARD is not being defined on the CMake command-line, in the environment or
+  by the app.
+Call Stack (most recent call first):
+  C:/ncs/v2.6.1/zephyr/cmake/modules/boards.cmake:56 (zephyr_check_cache)
+  C:/ncs/v2.6.1/zephyr/cmake/modules/zephyr_default.cmake:129 (include)
+  C:/ncs/v2.6.1/zephyr/share/zephyr-package/cmake/ZephyrConfig.cmake:66 (include)
+  C:/ncs/v2.6.1/zephyr/share/zephyr-package/cmake/ZephyrConfig.cmake:92 (include_boilerplate)
+  CMakeLists.txt:8 (find_package)
+
+
+-- Configuring incomplete, errors occurred!

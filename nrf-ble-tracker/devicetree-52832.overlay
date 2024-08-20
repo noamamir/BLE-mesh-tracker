@@ -1,0 +1,19 @@
+&uart0 {
+	current-speed = <460800>;
+};
+
+/ {
+    aliases {
+        rtc2 = &rtc2;
+    };
+
+    compatible = "nordic,nrf52-dk-nrf52832";
+};
+
+&timer1 {
+    status = "okay";
+};
+
+&rtc2 {
+    status = "okay";  // Use RTC2 instead of RTC1
+};

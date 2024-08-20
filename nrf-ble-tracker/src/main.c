@@ -22,7 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define UART_DEVICE_NODE DT_CHOSEN(zephyr_console)
+#define UART_DEVICE_NODE DT_NODELABEL(uart1)
 #define UART_BUF_SIZE 256
 
  static const struct device *uart_dev;
@@ -168,8 +168,6 @@ static void scan_recv_cb(const struct bt_le_scan_recv_info *info, struct net_buf
             LOG_INF("Device found: %s (RSSI %d)\n", addr, info->rssi);
         }
 
-        LOG_INF("Device found: %s (RSSI %d)\n", addr, info->rssi);
         send_tag_message(info);
-       
     }
 }

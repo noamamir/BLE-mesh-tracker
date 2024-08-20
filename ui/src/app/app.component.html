@@ -7,18 +7,18 @@
     <th mat-header-cell *matHeaderCellDef> likely at</th>
     <td mat-cell *matCellDef="let beacon">
       {{receiverAlias.aliasMap| async
-      | receiverAlias:(gridState.likelyIn | async)?.[beacon]?.uuid ?? 'cant tell'}}
+      | receiverAlias:(gridState.likelyIn | async)?.[beacon]?.id ?? 'cant tell'}}
     </td>
   </ng-container>
   <ng-container *ngFor="let receiver of gridState.receivers | async" [matColumnDef]="receiver">
     <th mat-header-cell *matHeaderCellDef
-        [ngClass]="{inactive: receiver | isReceiverInactive:(heartBeatServer.activeReceivers|async) }">
+        [ngClass]="{inactive: receiver | isReceiverInactive:(heartBeatServer.activeReceivers | async) }">
       {{receiverAlias.aliasMap | async | receiverAlias:receiver}}
       <br>
       <ng-container *ngIf="(heartBeatServer.messageCounter | async)?.get(receiver) as messageCount">
         {{messageCount.got}}/{{messageCount.should}}
       </ng-container>
-      blah
+      messages
     </th>
     <td mat-cell *matCellDef="let beaconName">
       <app-beacon-data

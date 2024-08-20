@@ -14,6 +14,7 @@ import {NgxIndexedDBModule} from "ngx-indexed-db";
 import {dbConfig} from "./DatabaseConfig";
 import {MatButtonModule} from "@angular/material/button";
 import { ReceiverAliasPipe } from './pipes/receiver-alias.pipe';
+import {HttpClientModule} from "@angular/common/http";
 
 @NgModule({
   declarations: [
@@ -30,7 +31,8 @@ import { ReceiverAliasPipe } from './pipes/receiver-alias.pipe';
     BrowserAnimationsModule,
     MatTableModule,
     NgxIndexedDBModule.forRoot(dbConfig),
-    MatButtonModule
+    MatButtonModule,
+    HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]

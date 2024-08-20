@@ -2,7 +2,7 @@ import serial
 import time
 
 # Configure the serial port
-ser = serial.Serial('COM3', 460800, timeout=1)
+ser = serial.Serial('COM4', 460800, timeout=1)
 
 # Get the current time in milliseconds
 current_time_ms = int(time.time() * 1000)
