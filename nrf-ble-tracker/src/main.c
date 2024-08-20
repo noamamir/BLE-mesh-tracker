@@ -163,7 +163,7 @@ static void scan_recv_cb(const struct bt_le_scan_recv_info *info, struct net_buf
     bt_addr_le_to_str(info->addr, addr, sizeof(addr));
 
 
-    if (addr[0] == 'F' && addr[1] == 'F' && addr[3] == 'F' && addr[4] == 'F') {
+    if ((addr[0] == 'F' && addr[1] == 'F' && addr[3] == 'F' && addr[4] == 'F') || (addr[0] == 'C' && addr[1] == '3' && addr[3] == '0' && addr[4] == '0')) {
         if (!is_master_device()) {
             LOG_INF("Device found: %s (RSSI %d)\n", addr, info->rssi);
         }

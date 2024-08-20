@@ -453,8 +453,8 @@ const struct bt_mesh_comp *model_handler_init(void)
 
 	chat_shell = shell_backend_uart_get_ptr();
 	shell_print(chat_shell, ">>> Bluetooth Mesh Chat sample <<<");
-	uart_init();
-	LOG_INF("Uart initialized\n");
+	// uart_init();
+	// LOG_INF("Uart initialized\n");
 
 	return &comp;
 }

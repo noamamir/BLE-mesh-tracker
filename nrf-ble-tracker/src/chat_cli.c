@@ -66,9 +66,7 @@ bool is_master_device(void)
 
 static void pass_tag_msg_to_pc(const struct bt_mesh_chat_cli *chat, const char *uuid, const bt_addr_t *addr, int8_t rssi, uint64_t time_sent, uint32_t msg_counter)
 {
-    char json_buffer[100];  // Increased buffer size to accommodate the new field
-    int len = snprintf(json_buffer, sizeof(json_buffer),
-             "{\"uuid\":\"%s\",\"addr\":\"%02x:%02x:%02x:%02x:%02x:%02x\",\"rssi\":%d,\"time_sent\":%" PRIu64 ",\"msg_counter\":%u}\n",
+	printk("TAG: {\"uuid\":\"%s\",\"addr\":\"%02x:%02x:%02x:%02x:%02x:%02x\",\"rssi\":%d,\"time_sent\":%" PRIu64 ",\"msg_counter\":%u}\n",
              uuid,
              addr->val[5], addr->val[4], addr->val[3],
              addr->val[2], addr->val[1], addr->val[0],
@@ -76,29 +74,18 @@ static void pass_tag_msg_to_pc(const struct bt_mesh_chat_cli *chat, const char *
              time_sent,
              msg_counter);
 
-	k_sleep(K_MSEC(50));
-	printk("\n");
-	printk("TAG: %s", json_buffer);
-    uart_send_data(chat, json_buffer, len);
+
 }
 
 // Function to pass hearbeat msg to a computer service
 static void pass_heartbeat_msg_to_pc(const struct bt_mesh_chat_cli *chat, const char *uuid , const uint64_t time_sent, uint32_t msg_counter)
 {
-    // Implement the logic to pass the data to your computer service
-    // This could involve sending data over UART, USB, or another interface
 
-	char json_buffer[100];
-	int len = snprintf(json_buffer, sizeof(json_buffer), 
-             "{\"uuid\":\"%s\", \"time_sent\":%" PRIu64 ", \"msg_counter\":%u}\n",
+	printk( "HEARTBEAT: {\"uuid\":\"%s\", \"time_sent\":%" PRIu64 ", \"msg_counter\":%u}\n",
              uuid,
              time_sent,
 			 msg_counter);
     
-	k_sleep(K_MSEC(50));
-	printk("\n");
-	printk("HEARTBEAT: %s", json_buffer);
-	uart_send_data(chat, json_buffer, len);
 }
 
 
