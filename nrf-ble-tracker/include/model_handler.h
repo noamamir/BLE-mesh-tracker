@@ -18,18 +18,11 @@
 extern "C" {
 #endif
 
-// Structure to hold advertising device info
-struct adv_device_info {
-    uint8_t addr[6];
-    int8_t rssi;
-};
-
-
 const struct bt_mesh_comp *model_handler_init(void);
-void send_tag_message(const struct bt_le_scan_recv_info *device);
-void send_time_sync(uint64_t *time);
-void send_hearbeat_msg();
 
+int  cmd_scan_init(void);
+void cmd_set_client_server_mode(void);
+void cmd_send_update(void);
 
 #ifdef __cplusplus
 }

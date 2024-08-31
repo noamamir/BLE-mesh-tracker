@@ -8,12 +8,6 @@ source "Kconfig.zephyr"
 
 menu "Nordic Bluetooth Mesh chat client sample"
 
-config DEVICE_IS_MASTER
-    bool "Device is master"
-    default n
-    help
-      Set to y if this device should act as the master device.
-	  
 config BT_MESH_CHAT_CLI_MESSAGE_LENGTH
 	int "Max length of the message to be sent over mesh"
 	default 90
@@ -31,10 +25,6 @@ config BT_MESH_CHAT_SAMPLE_PRESENCE_CACHE_SIZE
 	help
 	  Presence cache stores previously received presence of chat clients.
 	  Recommended to be as big as number of chat clients in the mesh network.
-
-config COUNTER_SAM0_TC32
-	bool
-	default y if BOARD_ATSAMD20_XPRO
 
 endmenu
 
