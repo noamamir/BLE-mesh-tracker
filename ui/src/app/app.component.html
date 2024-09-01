@@ -3,14 +3,7 @@
     <th mat-header-cell *matHeaderCellDef> beacon name</th>
     <td mat-cell *matCellDef="let beacon">
       <div class="flex-center">
-        <div class="receiver-wrapper flex-center">
-          <input matInput class="center"
-                 [value]="receiverAlias.aliasNames | async | AliasNames:beacon"
-                 #aliasInput>
-          <button mat-icon-button (click)="changeAliasName(beacon, aliasInput.value)">
-            <mat-icon>update</mat-icon>
-          </button>
-        </div>
+       <app-alias-name-input [originalName]="beacon"></app-alias-name-input>
       </div>
     </td>
   </ng-container>
@@ -18,14 +11,7 @@
     <th mat-header-cell *matHeaderCellDef
         [ngClass]="{inactive: receiver | isReceiverInactive:(heartBeatServer.activeReceivers | async) }">
       <div class="flex-center">
-        <div class="receiver-wrapper flex-center">
-          <input matInput class="center"
-                 [value]="receiverAlias.aliasNames | async | AliasNames:receiver"
-                 #aliasInput>
-          <button mat-icon-button (click)="changeAliasName(receiver, aliasInput.value)">
-            <mat-icon>update</mat-icon>
-          </button>
-        </div>
+          <app-alias-name-input [originalName]="receiver"></app-alias-name-input>
       </div>
       <br>
     </th>

@@ -17,8 +17,7 @@ import { AliasNamesPipe } from './pipes/receiver-alias.pipe';
 import {HttpClientModule} from "@angular/common/http";
 import {MatInputModule} from "@angular/material/input";
 import {MatIconModule} from "@angular/material/icon";
-import { AliasInputNameComponent } from './alias-input-name/alias-input-name.component';
-import { AliasNameInputComponent } from './alias-name-input/alias-name-input.component';
+import { AliasNameInputComponent } from './components/alias-name-input/alias-name-input.component';
 
 @NgModule({
   declarations: [
@@ -29,7 +28,6 @@ import { AliasNameInputComponent } from './alias-name-input/alias-name-input.com
     InPipe,
     IsReceiverInactivePipe,
     AliasNamesPipe,
-    AliasInputNameComponent,
     AliasNameInputComponent,
   ],
   imports: [

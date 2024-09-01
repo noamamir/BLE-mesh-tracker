@@ -1,0 +1,8 @@
+<div class="receiver-wrapper flex-center">
+  <input matInput class="center"
+         [value]="receiverAlias.aliasNames | async | AliasNames:originalName"
+         #aliasInput>
+  <button mat-icon-button (click)="changeAliasName(originalName, aliasInput.value)">
+    <mat-icon>update</mat-icon>
+  </button>
+</div>
