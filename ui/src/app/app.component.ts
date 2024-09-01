@@ -32,7 +32,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.gridState.receivers.pipe(
-      map(names => ['Beacon', 'LikelyIn', ...names])
+      map(names => ['Beacon', ...names])
     ).subscribe(this.columnNames)
 
     this.timer$ = this.timeService.time()
@@ -56,4 +56,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   entries(obj: Object) {
     return Object.entries(obj)
   }
+
+  changeAliasName(receiver: string, newName: string) {
+    this.receiverAlias.setAlias(receiver, newName)
+  }
+
 }

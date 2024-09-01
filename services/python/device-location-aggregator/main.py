@@ -11,12 +11,11 @@ from ui_communication_server import UICommunicationServer
 
 
 def main():
-
     # Create Boat instance
     boat = Boat()
 
     # Create UICommunicationServer instance
-    com_port_communication = NRFUARTCommunicator('COM5', boat)
+    com_port_communication = NRFUARTCommunicator('COM15', boat)
     ui_server = UICommunicationServer(boat, com_port_communication)
 
     ui_server.nrfCommunicator.connect()
@@ -34,6 +33,7 @@ def main():
     web_server_thread.start()
 
     com_port_communication.read_from_uart_loop()
+
 
 if __name__ == "__main__":
     main()

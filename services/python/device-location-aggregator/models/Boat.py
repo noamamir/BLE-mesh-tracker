@@ -28,7 +28,7 @@ class Boat:
 
     def handle_incoming_tag_messages(self, tag_msg: TagMessage):
         if tag_msg.uuid in self.registered_receivers:
-            beacon = Beacon(tag_msg.addr, tag_msg.rssi)
+            beacon = Beacon(tag_msg.addr, tag_msg.rssi, tag_msg.time_sent)
             self.registered_receivers[tag_msg.uuid].set_beacon(beacon)
         else:
             self.register_receiver(tag_msg.uuid)

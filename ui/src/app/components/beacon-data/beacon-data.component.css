@@ -2,6 +2,10 @@
   background: lightcoral;
 }
 
+.active {
+  background: #7af67a;
+}
+
 .cell {
   width: 100%;
   height: 100%;

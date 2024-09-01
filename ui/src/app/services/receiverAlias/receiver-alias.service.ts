@@ -7,17 +7,27 @@ import {BehaviorSubject, Observable} from "rxjs";
   providedIn: 'root'
 })
 export class ReceiverAliasService {
-  aliasMap = new BehaviorSubject<Readonly<Record<ReceiverId, string>>>({})
-
+  aliasNames = new BehaviorSubject<Readonly<Record<ReceiverId, string>>>({})
+  beaconAlias = new BehaviorSubject<Readonly<Record<ReceiverId, string>>>({})
+  aliasStorage = "ReceiverAlias"
+  BeaconAliasName = "BeaconAlias"
   constructor() {
-    this.setAlias('rec003', 'engine room')
-    this.setAlias('rec001', 'upper deck')
+    this.fetchAliasFromStorage()
   }
 
-  setAlias(receiver: ReceiverId, alias: string) {
-    const entry: Record<ReceiverId, string> = {}
-    entry[receiver] = alias
+  private fetchAliasFromStorage() {
+    const storedData = localStorage.getItem(this.aliasStorage)
+    const parsedData =  storedData ? JSON.parse(storedData) : {};
+    this.aliasNames.next(parsedData)
 
-    this.aliasMap.next({...this.aliasMap.value, ...entry})
   }
+
+  setAlias(name: string, alias: string): void {
+    const currentAliases = this.aliasNames.value;
+    const updatedAliases = { ...currentAliases, [name]: alias };
+
+    localStorage.setItem(this.aliasStorage, JSON.stringify(updatedAliases));
+    this.aliasNames.next(updatedAliases);
+  }
+
 }

@@ -18,26 +18,22 @@ export type State = Record<ReceiverId, Receiver>
 })
 export class GridStateService {
 
-  private receiversSubject = new BehaviorSubject<Record<ReceiverId, Receiver>>({});
-  receivers$ = this.receiversSubject.asObservable();
-
   private apiUrl = 'http://localhost:5000'; // Update with your server URL
 
   constructor(
     private http: HttpClient,
-    private socketService: SocketIoService,
     private tagUpdates: TagUpdatesService,
     private zone: NgZone,
     private heartBeatService: HeartBeatService,
-    private socketio: SocketIoService,
   ) {
-    this.initializeReceivers();
     this.listenForUpdates();
 
     this.state.pipe(
-      map(x => Object.keys(x)),
       distinctUntilChanged(),
-    ).subscribe(names => this.receivers.next(Array.from(new Set(names))))
+    ).subscribe(state => {
+      const ids = Object.keys(state);
+      this.receivers.next(Array.from(new Set(ids)))
+    })
 
     this.state.pipe(
       map(state => Object.entries(state)),
@@ -52,23 +48,19 @@ export class GridStateService {
     this.state.pipe(map(this.toLikelyInMap.bind(this))).subscribe(this.likelyIn)
   }
 
-  private initializeReceivers(): void {
-    this.http.get<Record<ReceiverId, Receiver>>(`${this.apiUrl}/devices`).subscribe(
-      (receivers) => {
-
-        this.receiversSubject.next(receivers);
-      },
-      (error) => console.error('Error fetching receivers:', error)
-    );
-  }
+  // private initializeReceivers(): void {
+  //   this.http.get<Record<ReceiverId, Receiver>>(`${this.apiUrl}/devices`).subscribe(
+  //     (receivers) => {
+  //
+  //       this.receiversSubject.next(receivers);
+  //     },
+  //     (error) => console.error('Error fetching receivers:', error)
+  //   );
+  // }
 
   private listenForUpdates(): void {
     this.tagUpdates.updates.subscribe((update) => this.handleTagUpdate(update))
-    this.heartBeatService.heartBeats.subscribe((heartbeat) => this.updateReceiverWithHeartbeat(heartbeat) )
-  }
-
-  private updateReceiverWithTagMessage(message: TagMessage): void {
-    this.handleTagUpdate(message)
+    this.heartBeatService.heartBeats.subscribe((heartbeat) => this.updateReceiverWithHeartbeat(heartbeat))
   }
 
 
@@ -77,11 +69,6 @@ export class GridStateService {
     console.log('Received heartbeat:', heartbeat);
   }
 
-  getReceiverById(id: ReceiverId): Observable<Receiver | undefined> {
-    return this.receivers$.pipe(
-      map(receivers => receivers[id])
-    );
-  }
 
   syncTime(): Observable<boolean> {
     return this.http.post<boolean>(`${this.apiUrl}/syncTime`, {});
@@ -93,10 +80,6 @@ export class GridStateService {
   beacons = new BehaviorSubject<BeaconId[]>([])
   receivers = new BehaviorSubject<ReceiverId[]>([])
 
-
-  getReceivers() {
-    // this.http.get()
-  }
 
   handleTagUpdate(tag: TagMessage) {
     let state = this.state.value;
@@ -123,22 +106,22 @@ export class GridStateService {
     this.heartBeatService.clear()
   }
 
-  beaconReceiverPairs(rec: Receiver): [BeaconId, ReceiverId][] {
-    return Object.keys(rec.beacons).map(beacon => [beacon, rec.id])
-  }
-
 
   toLikelyInMap(state: State) {
     const result: Record<BeaconId, Receiver> = {}
-
+    const timeNow = Date.now()
     for (const receiver of Object.values(state)) {
       const beacons = Object.values(receiver.beacons)
       for (let beacon of beacons) {
-        const curr = result[beacon.ID];
-        if (!curr) {
-          result[beacon.ID] = receiver
-        } else if (curr.beacons[beacon.ID].rssi < beacon.rssi) {
-          result[beacon.ID] = receiver
+        // filter out inactive beacons
+        if (timeNow - beacon.lastUpdated < 30 * 1e3) {
+          const curr = result[beacon.ID];
+
+          if (!curr) {
+            result[beacon.ID] = receiver
+          } else if (curr.beacons[beacon.ID].rssi > beacon.rssi) {
+            result[beacon.ID] = receiver
+          }
         }
       }
     }

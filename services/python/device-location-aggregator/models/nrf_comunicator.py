@@ -1,16 +1,18 @@
 import json
 import logging
-import os
-import time
-import serial
 import csv
 from models.Boat import Boat
+from models.beacon import Beacon
 from models.tag_message import TagMessage
 from models.heartbeat import Heartbeat
+from datetime import datetime
+from collections import defaultdict
+import serial
+import time
 
 
 class NRFUARTCommunicator:
-    def __init__(self, port, boat: Boat, baudrate=460800, timeout=3, max_attempts=5):
+    def __init__(self, port, boat: Boat, baudrate=115200, timeout=3, max_attempts=5):
         self.boat = boat
         self.port = port
         self.baudrate = baudrate
@@ -18,10 +20,8 @@ class NRFUARTCommunicator:
         self.max_attempts = max_attempts
         self.ser = None
         self.logger = self.setup_logger()
-        self.csv_filename = 'received_messages.csv'
         self.csv_file = None
         self.csv_writer = None
-
 
     def setup_logger(self):
         logger = logging.getLogger('NRFUARTCommunicator')
@@ -52,43 +52,46 @@ class NRFUARTCommunicator:
                     raise
 
     def read_from_uart_loop(self):
-        with open(self.csv_filename, 'a', newline='') as self.csv_file:
+        today = datetime.now().date()
+
+        with open(f'log_{today.strftime("%Y-%m-%d")}.csv', 'a', newline='') as self.csv_file:
             self.csv_writer = csv.writer(self.csv_file)
 
             while True:
                 try:
                     line = self.read_response()  # Read a line from the serial port
+                    if line:
+                        parsed = parse_line(line)
+                        if parsed:
+                            receiver_address, receiver_timestamp, beacons = parsed
+                            heartbeat = Heartbeat(receiver_address, receiver_timestamp, 0)
+                            self.boat.handle_incoming_heartbeat(heartbeat)
 
-                    if line.find("TAG:") != -1:
-                        json_line = line.split("TAG:")[1]  # Parse the JSON data for TAG message
-                        data = json.loads(json_line)
+                            for beacon in beacons:
+                                tag_msg = TagMessage(receiver_address, beacon.rssi, beacon.ID, beacon.lastUpdated, 0)
+                                self.boat.handle_incoming_tag_messages(tag_msg)
+                                self.csv_writer.writerow(
+                                    [time.strftime('%Y-%m-%d %H:%M:%S'), 'RCV', f"{receiver_address}", f"{beacon.ID}",
+                                     f"{beacon.rssi}"])
+                                self.csv_file.flush()
 
-                        self.logger.info(f"msg - {data['msg_counter']}")
-                        tag_msg = TagMessage(data['uuid'], data['rssi'], data['addr'], data['time_sent'], data['msg_counter'])
-                        self.boat.handle_incoming_tag_messages(tag_msg)
-
-                        # Write the received tag message to the CSV file
-                        self.csv_writer.writerow([time.strftime('%Y-%m-%d %H:%M:%S'), 'TAG', data['uuid'], data['rssi'], data['addr'], data['time_sent'], data['msg_counter']])
-                        self.csv_file.flush()
-                    elif line.find("HEARTBEAT:") != -1:
-                        json_line = line.split("HEARTBEAT:")[1]  # Parse the JSON data for HEARTBEAT message
-                        data = json.loads(json_line)
-
-                        self.logger.info(f"msg - {data['msg_counter']}")
-                        heartbeat = Heartbeat(data['uuid'], data['time_sent'], data['msg_counter'])
-                        self.boat.handle_incoming_heartbeat(heartbeat)
-
-                        self.csv_writer.writerow([time.strftime('%Y-%m-%d %H:%M:%S'), 'HEARTBEAT', data['uuid'], '', '', data['time_sent'], data['msg_counter']])
-                        self.csv_file.flush()
-                    time.sleep(0.1)
-                except json.JSONDecodeError:
+                    time.sleep(0.5)
+                except json.JSONDecodeError as e:
                     self.logger.warning("Received invalid JSON data")
+                    self.csv_writer.writerow([time.strftime('%Y-%m-%d %H:%M:%S'), 'JSONDecodeError', str(e)])
+                    self.csv_file.flush()
                 except serial.SerialException as e:
                     self.logger.error(f"Serial port error: {str(e)}")
+                    self.csv_writer.writerow([time.strftime('%Y-%m-%d %H:%M:%S'), 'SerialException', str(e)])
+                    self.csv_file.flush()
                 except KeyError as e:
                     self.logger.error(f"Invalid data format: {str(e)}")
+                    self.csv_writer.writerow([time.strftime('%Y-%m-%d %H:%M:%S'), 'KeyError', str(e)])
+                    self.csv_file.flush()
                 except Exception as e:
                     self.logger.error(f"Unexpected error: {str(e)}")
+                    self.csv_writer.writerow([time.strftime('%Y-%m-%d %H:%M:%S'), 'Exception', str(e)])
+                    self.csv_file.flush()
 
     def reconnect(self):
         self.logger.info("Attempting to reconnect...")
@@ -131,3 +134,31 @@ class NRFUARTCommunicator:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+
+def parse_hex(hex_str):
+    return int(hex_str, 16)
+
+
+def parse_line(line):
+    pos = line.find('RCV ')
+    if pos == -1:
+        return None
+    line = line[pos + 4:]
+
+    data = line.split(',')
+    receiver_address = str(data[0])
+    receiver_timestamp = int(data[1])
+
+    print(line)
+
+    beacons: list[Beacon] = []
+    for i in range(2, len(data), 3):
+        if i + 2 < len(data):
+            beacon_address = data[i]
+            rssi = int(data[i + 1])
+            last_seen = int(data[i + 2])
+            if beacon_address != '0000':
+                beacons.append(Beacon(beacon_address, rssi, last_seen))
+
+    return receiver_address, receiver_timestamp, beacons

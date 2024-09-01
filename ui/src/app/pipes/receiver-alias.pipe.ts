@@ -2,9 +2,9 @@ import { Pipe, PipeTransform } from '@angular/core';
 import {ReceiverId} from "../models/receiver";
 
 @Pipe({
-  name: 'receiverAlias'
+  name: 'AliasNames'
 })
-export class ReceiverAliasPipe implements PipeTransform {
+export class AliasNamesPipe implements PipeTransform {
 
   transform(aliasMap: Readonly<Record<string, string>> | null, receiver:ReceiverId): string {
     if (aliasMap == null) {

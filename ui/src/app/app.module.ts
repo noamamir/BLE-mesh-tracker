@@ -13,8 +13,12 @@ import { IsReceiverInactivePipe } from './pipes/is-receiver-inactive.pipe';
 import {NgxIndexedDBModule} from "ngx-indexed-db";
 import {dbConfig} from "./DatabaseConfig";
 import {MatButtonModule} from "@angular/material/button";
-import { ReceiverAliasPipe } from './pipes/receiver-alias.pipe';
+import { AliasNamesPipe } from './pipes/receiver-alias.pipe';
 import {HttpClientModule} from "@angular/common/http";
+import {MatInputModule} from "@angular/material/input";
+import {MatIconModule} from "@angular/material/icon";
+import { AliasInputNameComponent } from './alias-input-name/alias-input-name.component';
+import { AliasNameInputComponent } from './alias-name-input/alias-name-input.component';
 
 @NgModule({
   declarations: [
@@ -24,7 +28,9 @@ import {HttpClientModule} from "@angular/common/http";
     NanoToSecondsPipe,
     InPipe,
     IsReceiverInactivePipe,
-    ReceiverAliasPipe,
+    AliasNamesPipe,
+    AliasInputNameComponent,
+    AliasNameInputComponent,
   ],
   imports: [
     BrowserModule,
@@ -32,7 +38,9 @@ import {HttpClientModule} from "@angular/common/http";
     MatTableModule,
     NgxIndexedDBModule.forRoot(dbConfig),
     MatButtonModule,
-    HttpClientModule
+    HttpClientModule,
+    MatInputModule,
+    MatIconModule
   ],
   providers: [],
   bootstrap: [AppComponent]

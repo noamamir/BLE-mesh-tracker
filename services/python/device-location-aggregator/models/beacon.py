@@ -8,10 +8,10 @@ class Beacon:
     rssi: int
     lastUpdated: int
 
-    def __init__(self, ID: str, rssi: int):
+    def __init__(self, ID: str, rssi: int, lastUpdated: int):
         self.ID = ID
         self.rssi = rssi
-        self.lastUpdated = int(time.time())
+        self.lastUpdated = lastUpdated
 
     def UpdateBeacon(self, rssi: int):
         self.rssi = rssi

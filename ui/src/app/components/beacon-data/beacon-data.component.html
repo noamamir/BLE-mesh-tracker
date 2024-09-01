@@ -1,6 +1,6 @@
 <div class="wrapper"
      *ngIf="(((time$ | async) ?? 0) - beaconData.lastUpdated) | nanoToSeconds as timeElapsed">
-  <div [ngClass]="{'cell thing':true,inactive: timeElapsed.value >= 30}">
+  <div [ngClass]="{'cell thing':true,inactive: timeElapsed.value >= 30, 'active': highlightBeacon }">
     <p>{{timeElapsed.value}} </p>
     <p>RSSI: {{beaconData.rssi}}</p>
   </div>
